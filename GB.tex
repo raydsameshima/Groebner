@@ -1,0 +1,4646 @@
+\documentclass[11pt]{book}
+\usepackage{amsmath,amssymb}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage[all]{xy}
+\usepackage{stmaryrd}
+\usepackage[yyyymmdd]{datetime}
+%\usepackage{listings}
+
+\usepackage{hyperref}
+
+\usepackage{tikz}
+
+\DeclareMathOperator*{\colim}{colim}
+\DeclareMathOperator*{\coker}{coker}
+
+\begin{document}
+
+\newcommand{\Slash}[1]{{\ooalign{\hfil/\crcr$#1$}}}
+
+\title{ A note on Gr\"obner bases}
+\author{Ray D. Sameshima}
+\date{2015/02/10 $\sim$ \today \, \currenttime}
+\maketitle
+
+\tableofcontents
+
+%%%%%%body
+\setcounter{chapter}{-2}
+\chapter{Preface}
+
+\section{Reference}
+\begin{enumerate}
+\item Ideals, Varieties, and Algorithms\marginpar{Our source book.}\\
+An Introduction to Computational Algebraic Geometry and Commutative Algebra
+
+Authors: David Cox, John Little, Donal O'Shea\\
+ISBN: 978-0-387-35650-1 (Print) 978-0-387-35651-8 (Online)
+
+\item nLab
+
+\verb|https://ncatlab.org/|
+
+\item Learn You a Haskell for Great Good!
+
+\verb|http://learnyouahaskell.com/chapters|
+
+\item ASCENDING CHAIN CONDITION
+DENNIS S. KEELER
+
+\verb|http://www.users.miamioh.edu/keelerds/705/chain.pdf|
+
+\item A basic linear algebra(Masayoshi Nagata, et al) (written in Japanese)
+
+\item Maxima, a Computer Algebra System
+
+\verb|http://maxima.sourceforge.net|
+
+\end{enumerate}
+
+\chapter{Basics}
+We will assume living (working) knowledge on mathematics.
+
+\section{Set theoretical gadgets}
+Our set theory is ZFC.
+
+%\setcounter{subsection}{-1}
+
+\subsection{Binary relations}
+A binary relation $\rho$ on a set $S$ is a function\footnote{This is Haskell type annotation. Haskell is pure, lazy, functional programming language. www.haskell.org}
+\begin{eqnarray}
+\verb|rho :: S -> S -> Bool|
+\end{eqnarray}
+i.e., $\forall a,b \in S$, we can determine whether $a \rho b \left( = \rho(a,b) \right)$ is \verb|True| or \verb|False|.
+
+A set theoretical implementation is
+\begin{eqnarray}
+\rho \subset A \times A,
+\end{eqnarray}
+and
+\begin{eqnarray}
+a \rho b :\Leftrightarrow (a,b) \in \rho.
+\end{eqnarray}
+
+
+\subsection{Partially ordered sets}
+Let $\leq$ be a binary relation on a set $S$.
+A structured set $(S, \leq)$ is a partially ordered set iff
+\begin{eqnarray}
+\forall a \in S, a \leq a & \text{ (reflexivity)} \\
+\forall a,b,c \in S, (a \leq b, b \leq c \Rightarrow a \leq c) & \text{ (transitivity)} \\
+\forall a,b \in S, (a \leq b \leq a \Rightarrow a = b) & \text{ (antisymmetry)}
+\end{eqnarray}
+
+\subsection{Totally ordered sets}
+The partial order $(S, \leq)$ is called total (linear) order iff
+\begin{eqnarray}
+\forall a,b \in S, \text{either } a \leq b \text{ or } b \leq a
+\end{eqnarray}
+holds.
+That is, all two elements are comparable in a totally ordered set.
+
+\subsection{Well-ordered sets}
+A partially ordered set $(S, \leq)$ is well-ordered iff an arbitrary subset $\forall T \subset S$ has a minimum element.
+That is,
+\begin{eqnarray}
+\forall T \subset S, \exists t_0 \in T \text{ s.t. } \forall t \in T, t_0 \leq t.
+\end{eqnarray}
+
+\subsubsection{Well-ordered sets are totally ordered}
+A well-ordered set $(S, \leq)$ is indeed totally ordered, since an arbitrary pair
+\begin{eqnarray}
+\{a, b\} \subset S
+\end{eqnarray}
+has the minimum, that is, either $a \leq b$ or $b \leq a$.
+
+\subsection{Rings}
+A ring $(R,+,*)$ is a structured set with two binary operations
+\begin{eqnarray}
+\verb|(+) :: R -> R -> R|\\
+\verb|(*) :: R -> R -> R|
+\end{eqnarray}
+satisfying the following 3 (ring) axioms:
+\begin{enumerate}
+\item $(R,+)$ is an abelian, i.e., commutative group,
+i.e.,
+\begin{eqnarray}
+\forall a,b,c \in R, (a+b) + c = a + (b + c) & \text{ (associativity for $+$)} \\
+\forall a, b, \in R, a+b = b+a & \text{ (commutativity)} \\
+\exists 0 \in R, \text{ s.t. } \forall a \in R, a + 0 = a & \text{ (additive identity) } \\
+\forall a \in R, \exists (-a) \in R \text{ s.t. } a + (-a) = 0 & \text{ (additive inverse)}
+\end{eqnarray}
+
+\item $(R,*)$ is a monoid, i.e.,
+\begin{eqnarray}
+\forall a,b,c \in R, (a*b) * c = a * (b * c) & \text{ (associativity for $*$)} \\
+\exists 1 \in R, \text{ s.t. } \forall a \in R, a * 1 = a = 1*a & \text{ (multiplicative identity) } 
+\end{eqnarray}
+
+\item Multiplication is distributive w.r.t addition, i.e., $\forall a,b,c \in R$, 
+\begin{eqnarray}
+a*(b+c) = (a*b) + (a*c) & \text{ (left distributivity)} \\
+(a+b)*c = (a*c) + (b*c) & \text{ (right distributivity)} 
+\end{eqnarray}
+
+\end{enumerate}
+
+\subsection{Fields}
+A field is a ring $(\mathbb{K},+,*)$ whose non-zero elements form an abelian group under multiplication, i.e.,
+\begin{eqnarray}
+\forall r \in \mathbb{K}, r \neq 0 \Rightarrow \exists r^{-1} \in \mathbb{K} \text{ s.t. } r*r^{-1} = 1 = r^{-1}*r.
+\end{eqnarray}
+A field $\mathbb{K}$ is a finite field iff the underlying set $\mathbb{K}$ is finite.
+A field $\mathbb{K}$ is called infinite field iff the underlying set is infinite.
+
+\subsection{Equivalence relations}
+An equivalence relation $\sim$ on a set $S$ is a binary relation which is reflexive, symmetric, and transitive:
+\begin{eqnarray}
+\forall a \in S, a \sim a & \text{ (reflexivity)} \\
+\forall a,b \in S, (a \sim b \Rightarrow b \sim a) & \text{ (symmetry)} \\
+\forall a,b,c \in S, (a \sim b, b \sim c \Rightarrow a \sim c) & \text{ (transitivity)} 
+\end{eqnarray}
+Then the subset
+\begin{eqnarray}
+[a] := \left\{\left. x \in S \right| x \sim a \right\}
+\end{eqnarray}
+is called the equivalence class of $a$.
+
+\subsubsection{Partitions of disjoint subsets}
+An equivalence relation $\sim$ on $S$ partitions $S$ into disjoint subsets of equivalence classes.
+
+$\forall a \in S$ is in the equivalence class of itself, since $\sim$ is reflexive,
+\begin{eqnarray}
+a \sim a \Rightarrow a \in [a].
+\end{eqnarray}
+They are disjoint; if there exists some elements that is shared by two equivalent classes,
+\begin{eqnarray}
+x \in [a] \text{ and } x \in [b] \Rightarrow x \sim a \text{ and } x \sim b.
+\end{eqnarray}
+Since $\sim$ is transitive, we have
+\begin{eqnarray}
+a \sim b \Rightarrow [a] = [b].
+\end{eqnarray}
+$\blacksquare$
+
+\subsubsection{Note}
+This partition is a function from $S$ to the subsets of $S$:
+\begin{eqnarray}
+[] : S \to (2^S - \emptyset); a \mapsto [a].
+\end{eqnarray}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{The fundamental theorem in algebra}
+Here we review the fact that $\mathbb{C}$ of complex numbers is algebraically closed.
+
+\subsection{($\epsilon$-$N$) convergence}
+For simplicity, consider $\mathbb{C}$ of complex numbers and a function
+\begin{eqnarray}
+z: \mathbb{N} \to \mathbb{C}; z\mapsto z_n
+\end{eqnarray}
+so called a sequence.
+This $z$ converges to $c \in \mathbb{C}$ iff
+\begin{eqnarray}
+\forall \epsilon > 0, \exists N \in \mathbb{N} \text{ s.t. } (\forall n \geq N, |c - z_n| < \epsilon),
+\end{eqnarray}
+where $\forall a ,b \in \mathbb{R}$,
+\begin{eqnarray}
+|a + ib| :=  \sqrt{a^2 + b^2}
+\end{eqnarray}
+is the euclidean distance.
+
+\subsection{(Sequence) continuity}
+Consider a $\mathbb{C}$-valued sequence
+\begin{eqnarray}
+z: \mathbb{N} \to \mathbb{C}; z\mapsto z_n
+\end{eqnarray}
+which converges to $c \in \mathbb{C}$:
+\begin{eqnarray}
+\lim_{n \to \infty} z_n = c.
+\end{eqnarray}
+
+A function $f: \mathbb{C} \to \mathbb{C}$ is continuous at $c \in \mathbb{C}$ iff
+\begin{eqnarray}
+f(c) = f\left( \lim_{n \to \infty} z_n \right) = \lim_{n \to \infty} f(z_n).
+\end{eqnarray}
+A continuous function is a function which is continuous at every point.
+
+\subsection{Lemma (An extreme value theorem)}
+\label{aLemmaForFundamentalTheoremInAlgebra}
+Let
+\begin{eqnarray}
+C_1 := \left\{z \left| z \in \mathbb{C}, |z|^2 \leq 1 \right.\right\}
+\end{eqnarray}
+be a unit circle and its inside area.
+An arbitrary function
+\begin{eqnarray}
+f: C_1 \to \mathbb{R}
+\end{eqnarray}
+has the maximum and minimum.
+
+\subsubsection{Proof}
+It suffices to show the maximum case, and we prove by contradiction.
+
+Suppose there is no maximum; that is either
+\begin{enumerate}
+
+\item (no upper limit)
+\label{noUpperLimit}
+it diverges, i.e.,
+\begin{eqnarray}
+\forall N \in \mathbb{N}, \exists z \in C_1 \text{ s.t. } f(z) > N,
+\end{eqnarray}
+
+or
+
+\item (upper limit)
+\label{upperLimit}
+there is NO $z \in C_1$ s.t. $f(z) = \alpha$ but
+\begin{eqnarray}
+\forall n \in \mathbb{N}, f(z_n) < \alpha
+\end{eqnarray}
+and\footnote{
+We sometimes write it as
+\begin{eqnarray}
+f(z_n) \to \alpha - 0.
+\end{eqnarray}
+}
+\begin{eqnarray}
+\lim_{n \to \infty} f(z_n) = \alpha.
+\end{eqnarray}
+
+\end{enumerate}
+holds.
+
+Let us construct a sequence $p: \mathbb{N} \to C_1$ in $C_1$ by if there is no upper limit, put $p_n$ s.t.
+\begin{eqnarray}
+f(p_n) > n,
+\end{eqnarray}
+else if $\alpha$ is the upper limit, put $p_n$ s.t.
+\begin{eqnarray}
+\alpha - \frac{1}{n} < f(p_n) < \alpha.
+\end{eqnarray}
+Then we get a sequence\footnote{Here we have used the Axiom of choice.}
+\begin{eqnarray}
+p: \mathbb{N} \to C_1.
+\end{eqnarray}
+
+Next, consider the $\frac{1}{2} \times \frac{1}{2}$ squares determined by
+\begin{eqnarray}
+y = \frac{n}{2}, x = \frac{n}{2}.
+\end{eqnarray}
+Since $C_1$ is covered by a finite number(=16) of these squares, and at least one of which has infinite number of $p$'s, call it $S_1$.
+At least one of the quadrants of $S_1$ contains infinite number of $p$'s, call it $S_2$.
+By induction, we get a sequence of squares
+\begin{eqnarray}
+\left. S_n \right|_{n \in \mathbb{N}}
+\end{eqnarray}
+s.t., $\forall n \in \mathbb{N}$, $S_n$ is a $\frac{1}{2^n} \times \frac{1}{2^n}$ square and each $S_n$ contains infinite $p$'s.
+
+Let us pick a sub sequence $q : \mathbb{N} \to C_1$ of $p$ by
+\begin{enumerate}
+\item choose $q_1 \in S_1$ from arbitrary $p$'s in $S_1$, say for some $n$,
+\begin{eqnarray}
+q_1 := p_n.
+\end{eqnarray}
+
+\item let $i \geq 1$ and from
+\begin{eqnarray}
+q_1, \cdots, q_{i-1} = p_{m},
+\end{eqnarray}
+of some $m \in \mathbb{N}$, pick $q_i$ from
+\begin{eqnarray}
+\{p_j  \in S_i | j > m  \}
+\end{eqnarray}
+
+\end{enumerate}
+
+This sequence $q : \mathbb{N} \to C_1$ satisfies for $j>i$,
+\begin{eqnarray}
+q_j, q_i \in S_i
+\end{eqnarray}
+and its euclidean distance is smaller than 
+\begin{eqnarray}
+\sqrt{2} \frac{1}{2^i}
+\end{eqnarray}
+of diagonal.
+So, $q$ converges to a point in $C_1$
+\begin{eqnarray}
+\lim_{n\to \infty} q_n =: q_\infty \in C_1,
+\end{eqnarray}
+and since $f$ is continuous,
+\begin{eqnarray}
+f(q_\infty) = \lim_{n\to \infty} f(q_n).
+\end{eqnarray}
+
+If \ref{noUpperLimit}st (divergent) case holds, the right hand side is infinity,contradiction.
+Else \ref{upperLimit}nd (upper limit) case holds, the right hand side is $\alpha$, contradiction.
+
+Therefore, all function $f : C_1 \to \mathbb{R}$ has the maximum, and minimum.\\
+$\blacksquare$
+
+\subsection{The fundamental theorem in algebra}
+An arbitrary $\mathbb{C}$-coefficients $n$ degree polynomial
+\begin{eqnarray}
+\label{nDegreePolynomial}
+a_n * x^n + a_{n-1} * x^{n-1} + \cdots + a_0 = 0, a_n \neq 0, \left. a_i\right|_i \in \mathbb{C}
+\end{eqnarray}
+has a solution in $\mathbb{C}$.
+This means that $\mathbb{C}$ is algebraically closed.
+
+\subsubsection{Proof}
+Suppose there is no solution.
+Define
+\begin{eqnarray}
+F: \mathbb{C} \to \mathbb{R}
+\end{eqnarray}
+by
+\begin{eqnarray}
+F(x) := \left| a_n x^n + a_{n-1} x^{n-1} + \cdots + a_0 \right|.
+\end{eqnarray}
+We can choose a large $R'>0$ and $|x|>R'$ s.t.\footnote{
+Since this left hand side is decreasing if $|x|$ becomes larger and larger.
+}
+\begin{eqnarray}
+\left|\frac{a_{n-1}}{x} + \cdots + \frac{a_0}{x^n} \right| < \frac{|a_n|}{2}.
+\end{eqnarray}
+Then $\forall |x| > R'$,
+\begin{eqnarray}
+F(x) &=& |x|^n * \left|a_n + \frac{a_{n-1}}{x} + \cdots + \frac{a_0}{x^n} \right| \\
+&\geq& |x|^n *\left( \left|a_n \right| - \left| \frac{a_{n-1}}{x} + \cdots + \frac{a_0}{x^n} \right| \right) \\
+&>& |x|^n \frac{|a_n|}{2} 
+\end{eqnarray}
+and\footnote{
+We have used a triangle inequality
+\begin{eqnarray}
+|a+b| \leq |a| + |b|
+\end{eqnarray}
+and its consequence
+\begin{eqnarray}
+|a+b| - |b| \leq |b| \Leftrightarrow |c-b| \geq |c| -|b|.
+\end{eqnarray}
+}
+we also can find $R \geq R'$ s.t.
+\begin{eqnarray}
+\forall |x| > R, F(x) > F(0),
+\end{eqnarray}
+since $F(0) = a_0$ is a constant.
+
+So if we define 
+\begin{eqnarray}
+C_R := \{x \in \mathbb{C} | |x| \leq R\},
+\end{eqnarray}
+then
+\begin{eqnarray}
+x \notin C_R \Rightarrow F(x) > F(0).
+\end{eqnarray}
+Therefore, if $F(x)$ has a minimum in $C_R$, this is indeed the minimum in $\mathbb{C}$.
+
+Above lemma in \S\ref{aLemmaForFundamentalTheoremInAlgebra} guarantees that $F(x)$ has a minimum in $C_R$, and $F(x)$ has the minimum in $\mathbb{C}$:
+\begin{eqnarray}
+\min \left. F(x) \right|_x = \alpha \geq 0.
+\end{eqnarray}
+Since this is not a solution for eq.(\ref{nDegreePolynomial}), $\alpha$ is positive definite.
+Now suppose $F$ has this minimum $\alpha>0$ at $p$:
+\begin{eqnarray}
+F(p) = \alpha > 0.
+\end{eqnarray}
+
+Consider
+\begin{eqnarray}
+g(x) := a_n (x+p)^n + a_{n-1} (x+p)^{n-1} + \cdots + a_0.
+\end{eqnarray}
+Then $|g(x)|$ has its minimum $g(0) = \alpha$.
+Define $h(x)$ by 
+\begin{eqnarray}
+h(x)&:=& g(x)/\alpha\\ 
+&=& g(x) / (a_n p^n + a_{n-1} p^{n-1} + \cdots + a_0) \\
+&=& 1 + b_1 x + \cdots b_n x^n.
+\end{eqnarray}
+Consider $b_1, \cdots, b_n$, and let
+\begin{eqnarray}
+b_s
+\end{eqnarray}
+be the first nonzero coefficient.
+Define
+\begin{eqnarray}
+K := \max \{ |b_{s+1}|, \cdots, |b_n| \}
+\end{eqnarray}
+
+We can find a small $r>0$ which satisfies both
+\begin{eqnarray}
+1 - |b_s| r^s > 0
+\end{eqnarray}
+and
+\begin{eqnarray}
+0 < |b_s| r^s - \frac{K r^{s+1}}{1-r} < 1
+\end{eqnarray}
+
+If we write
+\begin{eqnarray}
+b_s = |b_s| * e^{i \theta}
+\end{eqnarray}
+and define
+\begin{eqnarray}
+q := r * e^{i (\pi - \theta)/s}
+\end{eqnarray}
+then $b_s q^s = |b_s| e^{i\theta} * r^s e^{i(\pi-\theta)} = |b_s| r^s e^{i\pi} = - |b_s| r^s$ and
+\begin{eqnarray}
+|h(q)| &=& |1 + b_s q^s + \cdots + b_n q^n| \\
+&\leq& 1 + |b_s q^s| + |b_{s+1} q^{s+1} + \cdots + b_n q^n| \\
+&<& 1 - |b_s| r^s + |b_{s+1}| r^{s+1} + \cdots + |b_n| r^n \\
+&\leq& 1 - |b_s| r^s + K\left( r^{s+1} + \cdots + r^n \right) \\
+&=& 1 - |b_s| r^s + K r^{s+1} \frac{1 - r^{n-s-1}}{1-r} \\
+&<& 1 - |b_s| r^s + \frac{K r^{s+1}}{1-r} \\
+&&< 1.
+\end{eqnarray}
+
+Since 
+\begin{eqnarray}
+|h(q)| = \frac{F(q+p)}{F(q)} < 1,
+\end{eqnarray}
+we get
+\begin{eqnarray}
+F(q+p) < F(p) = \alpha,
+\end{eqnarray}
+but it contradicts that $\alpha$ is the minimum of $F$.\\
+$\blacksquare$
+minimality 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Numbers; recipes without arithmetics}
+Here we review $\mathbb{N, Z, Q, R},$ and $\mathbb{C}$.
+If the readers are already familiar with (ZFC axiomatic) set theory and the set theoretic implementation of $\mathbb{N, Z, Q, R},$ and $\mathbb{C}$, you can skip this section.
+
+\subsection{Natural numbers $\mathbb{N}$}
+Here is a recursive implementation of natural numbers (Peano):
+\begin{eqnarray}
+0 &:=& \emptyset \\
+n+1 &:=& n \cup \{n\}
+\end{eqnarray}
+
+\subsection{Integers $\mathbb{Z}$}
+The set of integers is complete under subtraction:
+\begin{eqnarray*}
+\mathbb{Z} := (\mathbb{N} \times \mathbb{N})/ S,
+\end{eqnarray*}
+where the equivalence relation $S$ is given by
+\begin{eqnarray}
+(m_1, m_2)S(n_1,n_2) :\Leftrightarrow m_1 + n_2 = m_2 + n_1.
+\end{eqnarray}
+I.e., a negative integer $(-m) \in \mathbb{Z}$ of some $m \in \mathbb{N}$ is represented by, for example,
+\begin{eqnarray}
+(0,m).
+\end{eqnarray}
+
+\subsection{Rational numbers $\mathbb{Q}$}
+The set of rational numbers is complete under non-zero division:
+\begin{eqnarray}
+\mathbb{Q} := \left(\mathbb{Z} \times (\mathbb{Z} - \{0\}) \right)/F,
+\end{eqnarray}
+where the equivalence relation $F$ is given by
+\begin{eqnarray}
+(a,b) F (c, d) : \Leftrightarrow a * d = b * c.
+\end{eqnarray}
+Usually we denote
+\begin{eqnarray}
+\frac{a}{b} := (a,b) \in \mathbb{Q}.
+\end{eqnarray}
+
+\subsection{Real numbers $\mathbb{R}$}
+The set of real numbers should satisfy the Axiom of continuity, but before state it, let us define an important tool, the cut.
+
+\subsubsection{Dedekind cut of $\mathbb{Q}$}
+A Dedekind cut is a pair of non-empty subsets of $\mathbb{Q}$
+\begin{eqnarray}
+(A_-, A_+) \in (2^\mathbb{Q}-\{\emptyset\})^2
+\end{eqnarray}
+with
+\begin{eqnarray}
+A_- \cup A_+ = \mathbb{Q}
+\end{eqnarray}
+and
+\begin{eqnarray}
+x \in A_-, y \in A_+ \Rightarrow x < y.
+\end{eqnarray}
+
+\subsubsection{Definition of $\mathbb{R}$}
+There are three possibilities
+\begin{eqnarray}
+\label{notExistsExists}
+\nexists \max A_-, \exists \min A_+ \\
+\label{existsNotExists}
+\exists \max A_-, \nexists \min A_+ \\
+\label{notExistsNotExists}
+\nexists \max A_-,  \nexists \min A_+ 
+\end{eqnarray}
+Here is a preliminary definition of $\mathbb{R}$:\footnote{
+Alternatively, we can define $\mathbb{R}$ be the set of all Dedekind cuts identifying eq.(\ref{notExistsExists}) and eq.(\ref{existsNotExists}).
+}
+\begin{eqnarray}
+\mathbb{R} := \left\{\left. (A_-, A_+) \right| \text{Dedekind cut with} (\ref{existsNotExists}), (\ref{notExistsNotExists})\right\}
+\end{eqnarray}
+
+We define a total order $\leq$ as follows.
+Let 
+\begin{eqnarray}
+\alpha := (A_-, A_+), \beta := (B_-, B_+) \in \mathbb{R}
+\end{eqnarray}
+then we define
+\begin{eqnarray}
+\alpha \leq \beta :\Leftrightarrow A_- \subset B_-.
+\end{eqnarray}
+
+\subsubsection{The Axiom of continuity}
+A cut of $\mathbb{R}$
+\begin{eqnarray}
+(A,B)
+\end{eqnarray}
+with
+\begin{eqnarray}
+A \cup B = \mathbb{R}
+\end{eqnarray}
+and
+\begin{eqnarray}
+x \in A, y \in B \Rightarrow x < y
+\end{eqnarray}
+satisfies either
+\begin{eqnarray}
+\exists \min A, \nexists \max B
+\end{eqnarray}
+or
+\begin{eqnarray}
+\nexists \min A, \exists \max B.
+\end{eqnarray}
+
+\subsubsection{Check}
+We prove that our $\mathbb{R}$ satisfies the Axiom of continuity.
+Let 
+\begin{eqnarray}
+\{\alpha_\lambda\}_{\lambda \in \Lambda}
+\end{eqnarray}
+be bounded subspaces of $\mathbb{R}$, and
+\begin{eqnarray}
+\alpha_\lambda := (A^\lambda_-, A^\lambda_+).
+\end{eqnarray}
+Now
+\begin{eqnarray}
+\alpha &:=& (A_-, A_+) \\
+A_- &:=& \bigcup_{\lambda \in \Lambda} A^\lambda_- \\
+A_+ &:=& \mathbb{Q} - A_-
+\end{eqnarray}
+is an upper bound of $\{\alpha_\lambda\}_{\lambda \in \Lambda}$, since $\forall \lambda \in \Lambda$,
+\begin{eqnarray}
+A^\lambda_- \subset A_- \Leftrightarrow \alpha_\lambda \leq \alpha
+\end{eqnarray}
+by definition.
+
+Indeed this $\alpha$ is the minimum of upper bound of $\{\alpha_\lambda\}_{\lambda \in \Lambda}$, i.e., the supremum: if 
+\begin{eqnarray}
+\beta := (B^\lambda_-, B^\lambda_+)
+\end{eqnarray}
+is another upper bound of $\{\alpha_\lambda\}_{\lambda \in \Lambda}$, then 
+\begin{eqnarray}
+\forall \lambda \in \Lambda, A^\lambda_- \subset B.
+\end{eqnarray}
+This means
+\begin{eqnarray}
+A_- \subset B_- \Leftrightarrow \alpha \leq \beta.
+\end{eqnarray}
+Therefore, if $(A,B)$ is a cut of $\mathbb{R}$, then $A \subset \mathbb{R}$ has the supremum $\alpha \in \mathbb{R}$:
+\begin{eqnarray}
+\alpha := \sup A \in \mathbb{R}.
+\end{eqnarray}
+
+Finally we show that either $\alpha = \max A$ or $\alpha = \max B$.
+If $\alpha \neq \max A$, then
+\begin{eqnarray}
+\alpha \in B.
+\end{eqnarray}
+By definition, $\forall \beta \in B$ is an upper bound of $\alpha$:
+\begin{eqnarray}
+\alpha \leq \beta,
+\end{eqnarray}
+that is
+\begin{eqnarray}
+\alpha = \min B.
+\end{eqnarray}
+$\blacksquare$
+
+\subsection{Complex numbers $\mathbb{C}$}
+Let us define
+\begin{eqnarray}
+\mathbb{C} := (\mathbb{R}\times \mathbb{R}, +, *),
+\end{eqnarray}
+where
+\begin{eqnarray}
+(a,b) + (c,d) &:=& (a+c, b+d) \\
+(a,b) * (c,d) &:=& (a*c - b* d, a*d + b*c).
+\end{eqnarray}
+Note that
+\begin{eqnarray}
+(0,1) * (0,1) := (-1,0).
+\end{eqnarray}
+Usually we denote
+\begin{eqnarray}
+a + ib := (a,b) \in \mathbb{C}.
+\end{eqnarray}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Geometry, Algebra, and algorithms}
+Let $\mathbb{K}$ be an arbitrary fields.
+We will treat polynomial ring in $n$ variables $(x_1, \cdots, x_n)$ with  $\mathbb{K}$ coefficients:\footnote{ We will define this set in eq.(\ref{polynomialRing}).}
+\begin{eqnarray}
+\mathbb{K}[x_1,\cdots,x_n].
+\end{eqnarray}
+We will introduce affine varieties, which are sets defined by polynomial equations.
+
+\section{Polynomials and Affine space}
+\subsection{Monomials}
+A monomial in $x_1, \cdots, x_n$ is a product of the form
+\begin{eqnarray}
+x_1^{\alpha_1} * \cdots * x_n^{\alpha_n},
+\end{eqnarray}
+where
+\begin{eqnarray}
+\alpha_1, \cdots, \alpha_n \in \mathbb{N}.
+\end{eqnarray}
+The total degree of this monomial is the sum $\alpha_1+ \cdots + \alpha_n$.
+
+When every $\alpha$s zero, then we write
+\begin{eqnarray}
+x_1^{0} * \cdots * x_n^{0} = 1.
+\end{eqnarray}
+
+\subsection{Multi index notation}
+We write a monomial using multi index notation
+\begin{eqnarray}
+x^\alpha := x_1^{\alpha_1} * \cdots * x_n^{\alpha_n},
+\end{eqnarray}
+and the total degree
+\begin{eqnarray}
+|\alpha| := \alpha_1+ \cdots + \alpha_n.
+\end{eqnarray}
+
+\subsection{Polynomials}
+A polynomial $f(x) = f(x_1, \cdots, x_n)$ is a finite linear combination of monomials:
+\begin{eqnarray}
+f(x) = \sum_\alpha c_\alpha * x^\alpha,
+\end{eqnarray}
+where $\forall c_\alpha \in \mathbb{K}$ is called coefficient of monomial $x^\alpha$.
+
+For nonzero coefficient $c_\alpha \neq 0$,
+\begin{eqnarray}
+c_\alpha * x^\alpha
+\end{eqnarray}
+is called a term (of $f(x)$).
+
+The total degree of $f(x)$ is given by the maximum of $|\alpha|$ (of nonzero coefficients).
+
+We write
+\begin{eqnarray}
+\label{polynomialRing}
+\mathbb{K}[x_1,\cdots,x_n] := \left\{\left. f(x) = \sum_\alpha c_\alpha * x^\alpha \right| \forall c_\alpha \in \mathbb{K} \right\}
+\end{eqnarray}
+%Every element of $\mathbb{K}[x_1,\cdots,x_n]$ determine a function: $\forall f(x) \in \mathbb{K}[x_1,\cdots,x_n]$,
+%\begin{eqnarray}
+%f(x) = \sum_\alpha c_\alpha * x^\alpha : \mathbb{K}^n \to \mathbb{K}; a \mapsto \sum_\alpha c_\alpha * a^\alpha
+%\end{eqnarray}
+%by replacing every $x_i$ by $a_i$.
+
+\subsection{Affine spaces}
+Let $\mathbb{K}$ be a field and $n \in \mathbb{N}$.
+The $n$ dim affine space over $\mathbb{K}$ is the set
+\begin{eqnarray}
+\mathbb{K}^n := \left\{ \left. (a_1, \cdots, a_n) \right| a_1, \cdots, a_n \in \mathbb{K} \right\}.
+\end{eqnarray}
+
+\subsection{Polynomials as functions}
+A polynomial
+\begin{eqnarray}
+f(x) = \sum_\alpha c_\alpha * x^\alpha
+\end{eqnarray}
+can be seen as a function
+\begin{eqnarray}
+f : \mathbb{K}^n \to \mathbb{K}
+\end{eqnarray}
+which is defined by
+\begin{eqnarray}
+a:=(a_1, \cdots, a_n) \stackrel{f}{\mapsto} f(a) := \sum_\alpha c_\alpha * a^\alpha.
+\end{eqnarray}
+That is, the function $f$ replace every $x_i$ by $a_i$ in the expression for $f(x)$.
+
+\section{Affine Varieties}
+Affine varieties are higher curves and higher surfaces defined by polynomial equations.
+
+\subsection{Definition of affine varieties}
+\label{DefOfAV}
+Let $f_1(x), \cdots, f_s(x) \in \mathbb{K}[x_1,\cdots,x_n]$.
+Then
+\begin{eqnarray}
+\mathbb{V}(f_1, \cdots, f_s) := \left\{\left. a := (a_1, \cdots, a_n) \in \mathbb{K}^n \right| f_i(a) = 0, 1 \leq \forall i \leq s \right\}.
+\end{eqnarray}
+is the affine variety defined by $f_1, \cdots, f_s$.
+
+Thus, an affine variety $\mathbb{V}(f_1, \cdots, f_s)$ is the set of all solutions of the system of equations (for $x$):
+\begin{eqnarray}
+f_1(x) =0, \cdots, f_s(x) =0.
+\end{eqnarray}
+
+\subsection{Intersection and union of varieties}
+\label{intersectionAndUnionOfVarieties}
+Let $V, W \subset \mathbb{K}^n$ be 
+\begin{eqnarray}
+V &:=& \mathbb{V}(f_1, \cdots, f_s)\\
+W &:=& \mathbb{V}(g_1, \cdots, g_t)
+\end{eqnarray}
+of varieties.
+Then
+\begin{eqnarray}
+V \cap W &=& \mathbb{V}(f_1, \cdots, f_s, g_1, \cdots, g_t) \\
+V \cup W &=& \mathbb{V}\left( \left. f_i * g_j \right| 1 \leq i \leq s, 1 \leq j \leq t \right) 
+\end{eqnarray}
+
+\subsubsection{Proof}
+\begin{enumerate}
+
+\item $(V \cap W)$
+The 1st equation holds since
+\begin{eqnarray}
+a \in V \cap W \Leftrightarrow f(a) = 0 \text{ and } g(a) = 0 \Leftrightarrow a \in \mathbb{V}(f_1, \cdots, g_t).
+\end{eqnarray}
+
+\item $(V \cup W)$
+Let us start $\subset$-direction.
+If $a \in V$, i.e.,
+\begin{eqnarray}
+f_1(a) = \cdots = f_s(a) = 0.
+\end{eqnarray}
+Then $\forall i,j$,
+\begin{eqnarray}
+f_i * g_j = 0.
+\end{eqnarray}
+That is 
+\begin{eqnarray}
+a \in \mathbb{V}\left( \left. f_i * g_j \right| 1 \leq i \leq s, 1 \leq j \leq t \right),
+\end{eqnarray}
+and
+\begin{eqnarray}
+V \subset \mathbb{V}\left( \left. f_i * g_j \right| 1 \leq i \leq s, 1 \leq j \leq t \right).
+\end{eqnarray}
+This implies
+\begin{eqnarray}
+V \cup W \subset \mathbb{V}\left( \left. f_i * g_j \right| 1 \leq i \leq s, 1 \leq j \leq t \right).
+\end{eqnarray}
+
+For $\supset$-direction.
+Take
+\begin{eqnarray}
+a \in \mathbb{V}\left( \left. f_i * g_j \right| 1 \leq i \leq s, 1 \leq j \leq t \right).
+\end{eqnarray}
+If $a \in V$ then
+\begin{eqnarray}
+a \in V \subset V \cup W
+\end{eqnarray}
+and done.
+If $a \not\in V$, then there exists some $i_0$ s.t.
+\begin{eqnarray}
+f_{i_0}(a) \neq 0.
+\end{eqnarray}
+However, $\forall i,j$,
+\begin{eqnarray}
+f_i(a) * g_j(a) = 0
+\end{eqnarray}
+implies
+\begin{eqnarray}
+g_j(a) = 0, \forall j,
+\end{eqnarray}
+and $a \in W$.
+Therefore
+\begin{eqnarray}
+a \in W \subset V \cup W.
+\end{eqnarray}
+
+\end{enumerate}
+$\blacksquare$
+
+\section{Parameterizations of Affine Varieties}
+\subsection{Rational functions}
+Let $f(x)$ be an arbitrary, and $g(x)$ be non-zero polynomials.
+\begin{eqnarray}
+f(x),g(x) (\neq 0) \in \mathbb{K}[x_1,\cdots,x_n].
+\end{eqnarray}
+A rational function in $(x_1,\cdots,x_n)$ with $\mathbb{K}$ coefficients is a quotient
+\begin{eqnarray}
+f/g : \mathbb{K}^n \to \mathbb{K}; a \mapsto \frac{f(a)}{g(a)}.
+\end{eqnarray}
+
+The equality is given by
+\begin{eqnarray}
+f/g = h/k &:\Leftrightarrow& k*f = g*h \\
+&\Leftrightarrow& k(x)*f(x) = g(x)*h(x), \forall x \in \mathbb{K}.
+\end{eqnarray}
+
+\section{Ideals}
+\subsection{Ideals}
+\label{DefOfIdeal}
+A subset $I \subset \mathbb{K}[x_1,\cdots,x_n]$ is an ideal (or a polynomial ideal) iff
+\begin{eqnarray}
+0 &\in& I \\
+\forall f(x),g(x) \in I, f(x) + g(x) &\in& I \\
+\forall f(x) \in I, h(x) \in \mathbb{K}[x_1,\cdots,x_n], h(x)*f(x) &\in& I.
+\end{eqnarray}
+
+\subsection{Generators of an ideal}
+A set of polynomials generate an ideal:
+\begin{eqnarray}
+\left< f_1, \cdots, f_s \right> := \left\{ \left. \sum_i h_i(x) * f_i(x) \right| h_i \in \mathbb{K}[x_1,\cdots,x_n] \right\}
+\end{eqnarray}
+We call it an ideal generated by $f(x)$'s.
+
+\section{Polynomials of One(1) Variable}
+Consider univariate polynomials
+\begin{eqnarray}
+\mathbb{K}[x].
+\end{eqnarray}
+
+\subsection{Leading terms}
+Given nonzero polynomial $f(x) \in \mathbb{K}[x]$, let
+\begin{eqnarray}
+f(x) = a_m * x^m + \cdots + a_1 * x + a_0,
+\end{eqnarray}
+where $a_i \in \mathbb{K}$ and $a_m \neq 0$.
+Then
+\begin{eqnarray}
+m = \deg(f)
+\end{eqnarray}
+and
+\begin{eqnarray}
+a_m * x^m
+\end{eqnarray}
+is the leading term of $f$:
+\begin{eqnarray}
+LT\left(f(x) \right) = a_m * x^m.
+\end{eqnarray}
+
+\subsection{A total order $\leq$ in one variable $ \mathbb{K}[x]$ }
+If $f(x), g(x) \in \mathbb{K}[x]$ are nonzero polynomials, then
+\begin{eqnarray}
+\deg(f) \leq \deg(g) \Leftrightarrow LT\left(f(x) \right) \text{ divides } LT\left(g(x) \right).
+\end{eqnarray}
+This order is essentially the total order in $(\mathbb{N}, \leq)$, so we can define an totally ordered $(\mathbb{K}[x], \leq)$ by
+\begin{eqnarray}
+f(x) \leq g(x) :\Leftrightarrow \deg(f) \leq \deg(g).
+\end{eqnarray}
+We write
+\begin{eqnarray}
+f(x) > g(x)
+\end{eqnarray}
+for
+\begin{eqnarray}
+\lnot\left( f(x) \leq g(x) \right) &:\Leftrightarrow& \lnot\left( \deg(f) \leq \deg(g) \right) \\
+&\Leftrightarrow&  \deg(f) \not\leq \deg(g) \\
+&\Leftrightarrow&  \deg(f) > \deg(g).
+\end{eqnarray}
+
+\subsection{The Division Algorithm in 1 variable}
+\label{DivisionAlgorithmIn1}
+Let $g(x) \in \mathbb{K}[x]$ be a nonzero polynomial.
+Then $\forall f(x) \in \mathbb{K}[x]$, $\exists q(x),r(x) \in \mathbb{K}[x]$ s.t.
+\begin{eqnarray}
+f(x) = q(x)*g(x) + r(x)
+\end{eqnarray}
+and either
+\begin{eqnarray}
+r = 0
+\end{eqnarray}
+or
+\begin{eqnarray}
+\label{degreeOfReminder}
+\deg(r) < \deg(g).
+\end{eqnarray}
+There is an algorithm that can find unique $q(x)$ and $r(x)$.
+
+\subsubsection{Pseudo code}
+Here is our pseudo (Pascal like) code:
+\begin{verbatim}
+Input:  f,g
+Output: q,r
+
+q := 0
+r := f
+WHILE r /= 0 AND LT(g) divides LT(r) DO
+  q := q + LT(r) / LT(g)
+  r := r - (LT(r) / LT(g)) * g
+\end{verbatim}
+
+\subsubsection{Proof}
+First, we shall prove that $r$ and $q$ are unique.
+If we assume that there are two expressions
+\begin{eqnarray}
+\label{if2different}
+q_1(x)*g(x) + r_1(x) = f(x) = q_2(x)*g(x) + r_2(x).
+\end{eqnarray}
+If $r_1 = 0$ and $r_2 \neq 0$, then
+\begin{eqnarray}
+r_2(x) = \left(q_1(x) - q_2(x) \right)*g(x).
+\end{eqnarray}
+If $q_1(x) \neq q_2(x)$ then we can divide $r_2(x)$ by $g(x)$; contradiction (see eq.(\ref{degreeOfReminder})),
+So $r_1 =0$ requires $r_2=0$ and $q_1=q_2$.
+
+Else both $r_1(x)$ and $r_2(x)$ are nonzero, without loss of generality, we can put $\deg(r_1) \leq \deg(r_2)$ and eq.(\ref{degreeOfReminder}) holds: $\deg(r_2)< \deg(g)$.
+\begin{eqnarray}
+\label{ourAssumptionOfDegreeIn1}
+\deg(r_1) \leq \deg(r_2)< \deg(g).
+\end{eqnarray}
+From eq.(\ref{if2different}), we have
+\begin{eqnarray}
+r_2 - r_1 &=& (q_1 - q_2)*g.
+\end{eqnarray}
+Therefore, if $r_2 \neq r_1$, then
+\begin{eqnarray}
+\deg(r_2) &=& \deg(r_2 - r_1) \\
+&=& \deg\left( (q_1 - q_2)*g \right) \\
+&=& \deg(q_1 - q_2) + \deg(g) \\
+&>& \deg(g)
+\end{eqnarray}
+but this contradict our assumption eq.(\ref{ourAssumptionOfDegreeIn1}).
+So, both $r$ and $q$ are unique.
+
+Next we shall prove this algorithm terminate; we shall show that above WHILE is not an infinite loop.
+Since the process
+\begin{eqnarray}
+\verb| r -> r - (LT(r) / LT(g))* g |
+\end{eqnarray}
+is strict decreasing on their degree; suppose $m \geq k$ and\footnote{This is so called "big O notation".}
+\begin{eqnarray}
+r &=& a_0 * x^m + O(x^{m-1}) \\
+g &=& b_0 * x^k + O(x^{k-1})
+\end{eqnarray}
+Then $r - (LT(r) / LT(g))* g$ is
+\begin{eqnarray}
+a_0 * x^m + O(x^{m-1}) - \frac{a_0 * x^m}{b_0 * x^k} \times \left( b_0 * x^k + O(x^{k-1}) \right)
+\end{eqnarray}
+and clearly the coefficient of $x^m$ is cancelled out, the result is at most $O(x^{m-1})$.
+So, for finite degree of inputs, it exits WHILE loop finite steps.\\
+$\blacksquare$
+
+\subsubsection{$\text{rem}$ and $\text{quot}$}
+For $f(x), g(x)(\neq 0) \in \mathbb{K}[x]$ and the consequence of division algorithm,
+\begin{eqnarray}
+f(x) = q(x) * g(x) + r(x),
+\end{eqnarray}
+let us define
+\begin{eqnarray}
+\text{rem}\left( f(x), g(x) \right) &:=& r(x) \\
+\text{quot}\left( f(x), g(x) \right) &:=& q(x).
+\end{eqnarray}
+
+\subsubsection{Recursive definition}
+Here is the recursive definition.
+The input of this algorithm is two polynomials
+\begin{eqnarray}
+f(x), g(x)(\neq 0) \in \mathbb{K}[x]
+\end{eqnarray}
+and its outputs are
+\begin{eqnarray}
+q(x), r(x) \in \mathbb{K}[x]
+\end{eqnarray}
+s.t. $f(x) = q(x) * g(x) + r(x)$.
+
+\begin{enumerate}
+\item Base case.
+\begin{eqnarray}
+q_0(x) &:=& 0 \\
+r_0(x) &:=& f(x)
+\end{eqnarray}
+
+\item Induction step.
+If $r_n(x)$ is zero polynomial, or $LT\left(r_n(x) \right) \not\geq LT\left( g(x)\right)$,
+then
+\begin{eqnarray}
+q(x) &:=& q_n(x) \\
+r(x) &:=& r_n(x)
+\end{eqnarray}
+otherwise, i.e. $r_n(x) \neq 0$ and $LT\left(r_n(x) \right) \geq LT\left( g(x)\right)$,
+\begin{eqnarray}
+q_{n+1}(x) &:=& q_n(x) + \frac{LT\left( r_n(x) \right)}{LT\left( g(x) \right)} \\
+r_{n+1}(x) &:=& r_n(x) - \frac{LT\left( r_n(x) \right)}{LT\left( g(x) \right)}*g(x) 
+\end{eqnarray}
+
+\end{enumerate}
+
+
+\subsubsection{Haskell code}
+todo: QuickCheck
+
+Here is an actual code for one variable polynomial division.
+At first, we have used Double for coefficients, but Haskell can treat "Rationals".
+
+\begin{verbatim}
+DARation.lhs
+
+For one variable K[x].
+
+> module DARation where
+
+> import Data.Ratio 
+> import Test.QuickCheck
+
+> type Monomial = Int
+> -- type ATerm = (Double, Monomial)
+> type ATerm = (Ratio Int, Monomial)
+
+A term is given by its coefficient and its non-negative power.
+
+> type Poly = [ATerm]
+
+We assume that there is no terms with same power like
+  (3.0, 7) (-2.0, 7)
+It's much better to implement as an instance of Num!
+
+> polySort :: Poly -> Poly
+> polySort [] = []
+> polySort (f1@(c,a):polys) 
+>   = if (c /= 0) then higher ++ (f1: lower)
+>                 else higher ++ lower
+>   where higher = polySort [(c',a') | (c',a') <- polys, c' /= 0, a' > a]
+>         lower  = polySort [(c',a') | (c',a') <- polys, c' /= 0, a' < a]
+
+> polyAdd :: Poly -> Poly -> Poly
+> polyAdd f g = polyAdd' (polySort f) (polySort g) 
+>   where 
+>     polyAdd' :: Poly -> Poly -> Poly
+>     polyAdd' [] [] = []
+>     polyAdd' f [] = f
+>     polyAdd' [] g = g
+>     polyAdd' f@((c1,a1):fs) g@((c2,a2):gs) 
+>       | a1 > a2 = (c1,a1) : (polyAdd' fs g)
+>       | a1 < a2 = (c2,a2) : (polyAdd' f gs)
+>       | a1 == a2 = (c1+c2,a1) : (polyAdd' fs gs)
+>       | otherwise = error ":polyAdd"
+
+> polyNegate :: Poly -> Poly
+> polyNegate = map (\(c,a) -> (-c,a))
+
+> polySub :: Poly -> Poly -> Poly
+> polySub f g = polyAdd f (polyNegate g)
+
+> polyMul :: Poly -> Poly -> Poly
+> polyMul f g = polyMul' (polySort f) (polySort g)
+>   where 
+>     polyMul' :: Poly -> Poly -> Poly
+>     polyMul' [] [] = []
+>     polyMul' [] _ = []
+>     polyMul' _ [] = []
+>     polyMul' ((c1,a1):fs) g@((c2,a2):gs) 
+>       = polyAdd first (polyMul' fs g)
+>       where first = map (\(c,a) -> (c*c1, a+a1)) g
+
+  *DivisionAlgorithm> polyMul [(2,3),(-4,1),(3,0)] [(1,1),(1,0)]
+  [(2.0,4),(2.0,3),(-4.0,2),(-1.0,1),(3.0,0)]
+  (%i9) f: 2*x^3-4*x+3;
+  (%o9) 2*x^3-4*x+3
+  (%i10) g: x+1;
+  (%o10) x+1
+  (%i13) g*f, expand;
+  (%o13) 2*x^4+2*x^3-4*x^2-x+3
+
+> isDivisibleBy :: ATerm -> ATerm -> Bool
+> isDivisibleBy (_, a) (_, b) 
+>   | a < 0 || b < 0 = error "ATerm is given by positive power"
+>   | otherwise = (a >= b)
+
+> leadingTermOf :: Poly -> ATerm
+> leadingTermOf polynomial = head $ polySort polynomial 
+
+  *DivisionAlgorithm> let f = [(2,3),(-4,1),(3,0)] :: Poly 
+  *DivisionAlgorithm> leadingTermOf f
+  (2.0,3)
+
+> termDiv :: ATerm -> ATerm -> ATerm
+> termDiv f@(c1,a1) g@(c2,a2)
+>   | c2 == 0             
+>        = error "0 division"
+>   | f `isDivisibleBy` g 
+>        = (c1/c2, a1-a2) -- since c1 :: Ratio Int, 1/3 = 1 % 3
+>   | otherwise           
+>        = error "Not divisible"
+
+> -- polyDiv :: Poly -> Poly -> (Quot, Rem)
+> polyDiv :: Poly -> Poly -> (Poly, Poly)
+> polyDiv f g = polyDiv' (polySort f) (polySort g)
+> polyDiv' :: Poly -> Poly -> (Poly, Poly)
+> polyDiv' _ [] = error "zero division"
+> polyDiv' [] g = ([],g)
+> f `polyDiv'` g = div' g ([], f)
+>   where
+>     div' :: Poly -> (Poly, Poly) -> (Poly, Poly)
+>     div' g (q, r)
+>       | r /= [] && ltr `isDivisibleBy` ltg
+>           = div' g (q `polyAdd` newR, r `polySub` (newR `polyMul` g)) 
+>       | otherwise = (polySort q, polySort r)
+>       where
+>         ltr = leadingTermOf r
+>         ltg = leadingTermOf g
+>         newR = [ltr `termDiv` ltg] :: Poly
+
+  (%i41) divide(x^3+2*x^2+x+1, 2*x+1,x);
+  (%o41) [(4*x^2+6*x+1)/8,7/8]
+
+  *DARation Data.Ratio> let f = [(1,3),(2,2),(1,1),(1,0)]
+  *DARation Data.Ratio> let g = [(2,1),(1,0)]
+  *DARation Data.Ratio> f `polyDiv` g
+  ([(1 % 2,2),(3 % 4,1),(1 % 8,0)],[(7 % 8,0)])
+
+  *DARation Data.Ratio> f `polyDiv` g
+  ([(1 % 2,2),(3 % 4,1),(1 % 8,0)],[(7 % 8,0)])
+  *DARation Data.Ratio> ((fst it) `polyMul` g) `polyAdd` (snd it)
+  [(1 % 1,3),(2 % 1,2),(1 % 1,1),(1 % 1,0)]
+  *DARation Data.Ratio> it == f
+  True
+\end{verbatim}
+
+\subsection{"is divisible" $\sqsupseteq$}
+Let us define
+\begin{eqnarray}
+f(x) \sqsupseteq g(x) :\Leftrightarrow \exists q(x), f(x) = q(x) * g(x),
+\end{eqnarray}
+that is, iff $f(x)$ is divisible by $g(x)$ (so $r=0$).
+
+\subsection{Every ideal of $\mathbb{K}[x]$ is generated by one polynomial}
+\label{InOneDimension}
+$\forall$ideal of $\mathbb{K}[x]$ over a field $\mathbb{K}$ can be written in the form $\left< f\right>$.
+
+\subsubsection{Proof}
+Take an ideal $I \subset \mathbb{K}[x]$.
+If $I = \{ 0 \}$, then we have done since $I = \left< 0 \right>$.
+
+Otherwise, we can take a polynomial $f(x) \in I$ which is minimum in degree in $I$.
+We shall prove that $I = \left< f \right>$.
+Since $I$ is an ideal, if $\forall f'(x) \in \left< f \right>$ then $f'(x) \in I$, i.e.,
+\begin{eqnarray}
+\left< f \right> \subset I.
+\end{eqnarray}
+
+Conversely, $\forall g(x) \in I$, by division algorithm in \S\ref{DivisionAlgorithmIn1}, we have
+\begin{eqnarray}
+g(x) = q(x)*f(x) + r(x)
+\end{eqnarray}
+where either $r=0$ or $\deg(r) < \deg(f)$.
+Since $I$ is an ideal, $f(x),g(x) \in I$ and $q(x)*f(x) \in I$, we get
+\begin{eqnarray}
+r(x) = g(x) -q(x)*f(x) \in I.
+\end{eqnarray}
+If $r$ were not $0$, then from \S\ref{DivisionAlgorithmIn1}, $\deg(r) < \deg(f)$, which would contradict our minimum assumption.
+So $r=0$ and this means
+\begin{eqnarray}
+g(x) \in \left< f \right>,
+\end{eqnarray}
+and this means
+\begin{eqnarray}
+\left< f \right> \supset I.
+\end{eqnarray}
+
+Therefore we get
+\begin{eqnarray}
+\left< f \right> = I.
+\end{eqnarray}
+$\blacksquare$
+
+\subsubsection{Principal ideal domain (PID)}
+In general, an ideal generated by one element is called a principal ideal.
+
+\subsection{Corollary}
+\label{atMostDeg}
+Let $\mathbb{K}$ be a field and $f(x) \in \mathbb{K}[x]$ be a non zero polynomial.
+If $m = \deg(f)$, then $f(x) = 0$ has at most $m$ roots in $\mathbb{K}$.
+
+\subsubsection{Proof}
+We will prove this statement by induction on $m$.
+When $m=0$, then $f$ is just a non zero constant, and there is no root, so we have $0$ root.
+
+Assume $m-1$ case holds, then consider $f$ of $m$ degree.
+If $f$ has no root, then done.
+Else $f(x)=0$ has a root $a \in \mathbb{K}$, then by \S\ref{DivisionAlgorithmIn1},
+\begin{eqnarray}
+f(x) = q(x)* (x-a) + r(x), \deg(r) < \deg(x-a)=1
+\end{eqnarray}
+that is $r \in \mathbb{K}$.
+Since $f$ is zero at $a$,
+\begin{eqnarray}
+r = f(a) = 0
+\end{eqnarray}
+and
+\begin{eqnarray}
+f (x)= q(x)* (x-a).
+\end{eqnarray}
+Since $\deg(q)$ is $m-1$, and has at most $m-1$ root in $\mathbb{K}$.
+Therefore, $f(x)=0$ has at most $m$ root.\\
+$\blacksquare$
+
+\subsection{Zero function on an infinite field}
+Consider an infinite field $\mathbb{K}$ and $f(x) \in \mathbb{K}[x_1, \cdots, x_n]$.
+Then $f = 0$ in $f \in \mathbb{K}[x_1, \cdots, x_n]$ iff $f(x) : \mathbb{K}^n \to \mathbb{K}$ is the zero function.
+
+\subsubsection{Proof}
+$(\Rightarrow)$ part is obvious, since if $f(x)$ is the zero polynomial, i.e., all the coefficients are zero, then $f(x)$ gives zero function:
+\begin{eqnarray}
+f : \mathbb{K}^n \to \mathbb{K}; \forall a \mapsto 0.
+\end{eqnarray}
+
+$(\Leftarrow)$ We will use induction on $n$ to show the statement that if for every $a \in \mathbb{K}^n, f(a) = 0$ then $f(x)$ is the zero polynomial.
+
+\begin{enumerate}
+\item Base case ($n=1$).
+Since $f(x) \in \mathbb{K}[x]$ has at most $\deg(f)$ roots in $\mathbb{K}$ by \S\ref{atMostDeg}, if $\deg(f)$ is finite, we can choose some
+\begin{eqnarray}
+a \in \mathbb{K}
+\end{eqnarray}
+s.t.
+\begin{eqnarray}
+f(a) \neq 0
+\end{eqnarray}
+since $\mathbb{K}$ is infinite (set).
+So, if $\forall a \in \mathbb{K}, f(a) = 0$ then $f(x)=0$ has infinitely many roots, and hence $f(x)$ is the zero polynomial.
+
+\item Induction step.
+Assume $n-1$ case is true, and let $f(x) \in \mathbb{K}[x_1, \cdots, x_n]$ be a polynomial s.t. $\forall a \in \mathbb{K}^n, f(a) = 0$.
+By collecting the terms which are powers of $x_n$, we can write
+\begin{eqnarray}
+f(x) = \sum_{i} g_i (x_1, \cdots, x_{n-1}) * x_n^i.
+\end{eqnarray}
+
+Let us fix
+\begin{eqnarray}
+(a_1, \cdots, a_{n-1}) \in \mathbb{K}^{n-1}
+\end{eqnarray}
+and treat
+\begin{eqnarray}
+f(a_1, \cdots, a_{n-1}, x_n) \in \mathbb{K}[x_n] 
+\end{eqnarray}
+as a polynomial only of $x_n$.
+Since $f(x)$ is zero for every $x_n$, $f(x)$ is the zero polynomial of $x_n$.
+This means the "coefficients" are zero
+\begin{eqnarray}
+g_i (a_1, \cdots, a_{n-1}) = 0.
+\end{eqnarray}
+However, our choice of $(a_1, \cdots, a_{n-1})$ is arbitrary and this means every $g_i(x)$ is zero polynomial in $\mathbb{K}[x_1, \cdots, x_{n-1}]$.
+From the induction hypothesis, $g_i = 0$, and
+\begin{eqnarray}
+f = 0.
+\end{eqnarray}
+\end{enumerate}
+
+$\blacksquare$
+
+%\subsection{Properties of GCD}
+%Let $f,g \in \mathbb{K}[x]$, then
+%\begin{enumerate}
+%\item $\exists GCD(f,g)$ up to nonzero multiplication.
+%\item $\left< f, g\right> = \left< GCD(f,g) \right>$, i.e. $GCD(f,g)$ is a generator of the ideal $\left< f, g\right>$.
+%\item There is an algorithm for finding $GCD(f,g)$.
+%\end{enumerate}
+
+\subsection{GCD}
+A greatest common divisor of $f(x),g(x) \in \mathbb{K}[x]$ is a polynomial $h(x) \in \mathbb{K}[x]$ s.t.
+\begin{enumerate}
+\item 
+\begin{eqnarray}
+f(x) &\sqsupseteq& h(x) \\
+g(x) &\sqsupseteq& h(x) 
+\end{eqnarray}
+
+\item If $h'(x) \in \mathbb{K}[x]$ satisfies
+\begin{eqnarray}
+f(x) &\sqsupseteq& h'(x) \\
+g(x) &\sqsupseteq& h'(x) 
+\end{eqnarray}
+then
+\begin{eqnarray}
+h(x) \sqsupseteq h'(x) 
+\end{eqnarray}
+i.e., "greatest".
+
+\end{enumerate}
+
+\subsubsection{Proof}
+We show the existence of such a gcd.
+Let us consider an ideal
+\begin{eqnarray}
+\left< f(x), g(x) \right> \subset \mathbb{K}[x].
+\end{eqnarray}
+Since $\forall$ ideal in $\mathbb{K}[x]$ is PID, there exists a polynomial $h(x) \in \mathbb{K}[x]$ s.t.
+\begin{eqnarray}
+\left< f(x), g(x) \right> = \left< h(x)\right>.
+\end{eqnarray}
+So, there are $a(x),b(x) \in \mathbb{K}[x]$ s.t.
+\begin{eqnarray}
+f(x) &=& a(x) * h(x) \\
+g(x) &=& b(x) * h(x) \\
+\end{eqnarray}
+since $f(x), g(x) \in \left< f(x), g(x) \right> = \left< h(x)\right>$.
+This is equivalent to
+\begin{eqnarray}
+f(x) &\sqsupseteq& h(x) \\
+g(x) &\sqsupseteq& h(x) 
+\end{eqnarray}
+We claim that this $h(x)$ is a greatest common devisor of $f(x)$ and $g(x)$.
+
+If we take $h'(x) \in \mathbb{K}[x]$ s.t.
+\begin{eqnarray}
+f(x) &\sqsupseteq& h'(x) \\
+g(x) &\sqsupseteq& h'(x) 
+\end{eqnarray}
+i.e., $\exists c(x),d(x) \in \mathbb{K}[x]$ s.t.,
+\begin{eqnarray}
+f(x) &=& c(x) * h'(x) \\
+g(x) &=& d(x) * h'(x).
+\end{eqnarray}
+Then, since $\left< f(x), g(x) \right> = \left< h(x)\right>$, there exists $i(x),j(x) \in \mathbb{K}[x]$ s.t.
+\begin{eqnarray}
+h(x) &=& i(x) * f(x) + j(x) * g(x) \\
+&=& \left( i(x)*c(x) + j(x)*d(x) \right) * h'(x).
+\end{eqnarray}
+That is,
+\begin{eqnarray}
+h(x) \sqsupseteq h'(x).
+\end{eqnarray}
+$\blacksquare$
+
+\subsection{GCD is "unique"}
+GCD is unique up to overall factor.
+
+\subsubsection{Proof}
+If we have 
+\begin{eqnarray}
+h(x), h'(x) \in \mathbb{K}[x]
+\end{eqnarray}
+as two GCD of $f(x), g(x) \in \mathbb{K}[x]$, then
+\begin{eqnarray}
+h(x) &\sqsupseteq& h'(x) \\
+h'(x) &\sqsupseteq& h(x)
+\end{eqnarray}
+i.e., we have $l(x), m(x) \in \mathbb{K}[x]$ s.t.
+\begin{eqnarray}
+h(x) &=& l(x) * h'(x) \\
+h'(x) &=& m(x) * h(x) 
+\end{eqnarray}
+So
+\begin{eqnarray}
+h(x) = \left( l(x) * m(x) \right) * h(x)
+\end{eqnarray}
+i.e., $l(x),m(x)$ are constant polynomial:
+\begin{eqnarray}
+l(x) * m(x) = 1, \forall x \in \mathbb{K}.
+\end{eqnarray}
+$\blacksquare$
+
+\subsection{GCD algorithm}
+\subsubsection{Pseudo code and recursive definition}
+\begin{verbatim}
+Input: f,g
+Output: h
+h := f
+s := g
+WHILE s /= 0 DO
+  rem := remainder(h,s)
+  h := s
+  s := rem
+\end{verbatim}
+
+Here is the recursive definition.
+\begin{enumerate}
+\item Base case.
+\begin{eqnarray}
+h_0(x) &:=& f(x) \\
+s_0(x) &:=& g(x) %\\
+%r_0(x) &:=& \text{rem}\left( h_0(x), s_0(x) \right)
+\end{eqnarray}
+
+\item Induction step.
+If $s_n(x)$ is zero polynomial, then
+\begin{eqnarray}
+\text{GCD}\left( f(x), g(x) \right) &:=& h_n(x),
+\end{eqnarray}
+otherwise
+\begin{eqnarray}
+h_{n+1}(x) &:=& s_n(x) \\
+s_{n+1}(x) &:=& \text{rem}\left( h_n(x), s_n(x) \right) .
+\end{eqnarray}
+
+\end{enumerate}
+
+\subsubsection{Proof}
+Let us prove that this algorithm will terminate in finite steps.
+From the division algorithm, observe
+\begin{eqnarray}
+\deg\left( s_0(x) \right) > \deg\left( s_1(x) \right) > \cdots,
+\end{eqnarray}
+i.e., $\left\{ \deg\left( s_n(x) \right) \right\}_n$ is strictly decreasing sequence.
+Since our termination condition is $\deg\left( s_n(x) \right)=0$, this algorithm will stop at finite steps.
+
+If we put
+\begin{eqnarray}
+h_n(x) = q_n(x)*s_n(x) + \text{rem}\left( h_n(x), s_n(x) \right)
+\end{eqnarray}
+as the consequence of polynomial division, then
+\begin{eqnarray}
+\left<h_n(x), s_n(x) \right>
+&=& \left< q_n(x)*s_n(x) + \text{rem}\left( h_n(x), s_n(x) \right), s_n(x) \right> \qquad\\
+&=& \left<\text{rem}\left( h_n(x), s_n(x) \right), s_n(x) \right> \\
+&=& \left<s_{n+1}(x), h_{n+1}(x) \right>
+\end{eqnarray}
+Therefore, if $s_n(x)$ is zero polynomial, then we get
+\begin{eqnarray}
+\left<  f(x), g(x) \right>
+&=& \left<h_0(x), s_0(x) \right> \\
+\nonumber
+&\vdots& \\
+&=& \left<h_{n-1}(x), s_{n-1}(x) \right> \\
+&=& \left<h_n(x), 0 \right> \\
+&=& \left<h_n(x)\right>
+\end{eqnarray}
+So
+\begin{eqnarray}
+\text{GCD}\left( f(x), g(x) \right) = h_n(x).
+\end{eqnarray}
+$\blacksquare$
+
+\subsection{B\"ezout lemma}
+\label{BezoutLemma}
+For arbitrary polynomials $f(x), g(x) \in \mathbb{K}[x]$, there are $a(x), b(x) \in \mathbb{K}[x]$ s.t.
+\begin{eqnarray}
+f(x) * a(x) + g(x) * b(x) = \text{GCD}\left( f(x), g(x) \right).
+\end{eqnarray}
+To prove this claim, we extend our GCD algorithm.
+
+\subsection{Extended GCD}
+The following algorithm is a constructive proof for B\"ezout lemma in \S\ref{BezoutLemma}.
+\begin{enumerate}
+\item Base case.
+\begin{eqnarray}
+\left( r_0(x), s_0(x), t_0(x) \right) &:=& \left( f(x), 1, 0\right) \\
+\left( r_1(x), s_1(x), t_1(x) \right) &:=& \left( g(x), 0, 1\right)
+\end{eqnarray}
+
+\item Induction step.
+Define $n \geq 2$,
+\begin{eqnarray}
+q_n(x) := \text{quot}\left( r_{n-2}(x), r_{n-1}(x) \right)
+\end{eqnarray}
+and
+\begin{eqnarray}
+r_n(x) &:=& \text{rem}\left( r_{n-2}(x), r_{n-1}(x) \right) \qquad \\
+&=& r_{n-2}(x) - q_n(x) * r_{n-1}(x) \\
+s_n(x) &:=& s_{n-2}(x) - q_n(x) * s_{n-1}(x) \\
+t_n(x) &:=& t_{n-2}(x) - q_n(x) * t_{n-1}(x) 
+\end{eqnarray}
+
+If $r_{n+1}(x)$ is zero polynomial, then
+\begin{eqnarray}
+\text{GCD}\left( f(x), g(x) \right) := r_n(x).
+\end{eqnarray}
+
+\end{enumerate}
+
+\subsubsection{Proof}
+This algorithm will also terminate, since
+\begin{eqnarray}
+\deg\left(r_n(x) \right) > \deg\left(r_{n+1}(x) \right).
+\end{eqnarray}
+Observe that for $n=0,1$ they satisfy so called B\"ezout identity
+\begin{eqnarray}
+r_n(x) &=& s_n(x) * f(x) + t_n(x) * g(x).
+\end{eqnarray}
+We claim this holds for all $n$.
+If we assume this is the case for $0,1, \cdots, n(\geq 1)$, then
+\begin{eqnarray}
+r_{n+1}(x)
+&:=& r_{n-1}(x) - q_n(x) * r_{n}(x) \\
+&=& s_{n-1}(x) * f(x) + t_{n-1}(x) * g(x) - q_n(x) * \left( s_n(x) * f(x) + t_n(x) * g(x) \right) \qquad \qquad \\
+&=& \left( s_{n-1}(x) + q_n(x) * s_n(x) \right) * f(x) + \left( s_{n-1}(x) + q_n(x) * s_n(x) \right) * g(x) \\
+&=& s_{n+1}(x) * f(x) + t_{n+1}(x) * g(x)
+\end{eqnarray}
+
+Now
+\begin{eqnarray}
+\left< r_n(x), r_{n+1}(x) \right>
+&=& \left< r_n(x), r_{n-1}(x) - q_{n+1}(x) * r_n(x) \right> \\
+&=& \left< r_n(x), r_{n-1}(x) \right>
+\end{eqnarray}
+we get
+\begin{eqnarray}
+\left< f(x), g(x) \right> &:=& \left< r_0(x), r_1(x) \right> \\
+&=& \left< r_1(x), r_2(x) \right> \\
+\nonumber &\vdots& 
+\end{eqnarray}
+Therefore, if we meet $r_{n+1}(x) = 0$, then
+\begin{eqnarray}
+\left< f(x), g(x) \right>  &=& \left< r_n(x), 0 \right> \\
+&=& \left< r_n(x)\right> \\
+\end{eqnarray}
+so
+\begin{eqnarray}
+\text{GCD}\left( f(x), g(x) \right) := r_n(x).
+\end{eqnarray}
+For this $n$ with $r_{n+1}(x) = 0$, we have
+\begin{eqnarray}
+r_n(x) = s_n(x) * f(x) + t_n(x) * g(x).
+\end{eqnarray}
+$\blacksquare$
+
+%%%%%%%%%%%%% GCF %%%%%%%%%%%%%
+
+\chapter{Gr\"obner Bases}
+I'd like to rewrite AAC related sections from scratch.
+
+\section{Introduction}
+
+%\section{Orderings on the Monomials in $\mathbb{K}[x_1, \cdots, x_n]$}
+\section{Orderings on the Monomials in $\mathbb{K}\left[x_1, ... , x_n\right]$}
+\subsection{Definition of monomial order $(\mathbb{N}^n, >)$}
+\label{DefOfMonomialOrder}
+A monomial order on $\mathbb{K}[x_1, \cdots, x_n]$ is a relation $>$ on $\mathbb{N}^n$, or on a set $\{x^\alpha | \alpha \in \mathbb{N}^n \}$, satisfying
+\begin{eqnarray}
+\text{$(\mathbb{N}^n, >)$ is totally ordered} \\
+\alpha > \beta, \gamma \in \mathbb{N}^n \Rightarrow \alpha + \gamma > \beta + \gamma \\
+\label{wellOrderedMonomialOrder}
+\text{$(>, \mathbb{N}^n)$ is well-ordered.}
+\end{eqnarray}
+
+The following lemma will help us understand what the well-ordering condition of the third part of above definition:
+
+\subsection{A condition for $(\mathbb{N}^n, >)$ is well-ordered}
+\label{wellOrderingCondition}
+An order $>$ on $\mathbb{N}^n$ is well-ordered iff $\forall$ strictly decreasing sequence $\{\alpha(i)\}_i$ in $\mathbb{N}^n$ will terminate:
+\begin{eqnarray}
+\alpha(1) > \alpha(2) > \cdots > \alpha(m).
+\end{eqnarray}
+
+\subsubsection{Proof}
+We shall prove this in contrapositive form.\footnote{For $P\Rightarrow Q$, its contraposition is $\lnot Q \Rightarrow \lnot P$.}
+
+If $(\mathbb{N}^n, >)$ is not well-ordered, then there is a non-empty subset $S \subset \mathbb{N}^n$ that has no smallest element.
+We can pick $\alpha(1) \in S$, but $\alpha(1)$ is not the smallest element.
+Thus $\exists \alpha(2) \in S$ s.t. $\alpha(1) > \alpha(2)$.
+Continuing the same way, we can get an infinite strictly decreasing sequence in $S$:
+\begin{eqnarray}
+\alpha(1) > \alpha(2) > \cdots
+\end{eqnarray}
+
+Conversely, given such an infinite sequence, then
+\begin{eqnarray}
+\left\{\alpha(1), \alpha(2), \cdots \right\}
+\end{eqnarray}
+is a nonempty subset in $\mathbb{N}^n$ with no smallest element.
+That is, we have shown
+\begin{eqnarray}
+(\mathbb{N}^n, >) \text{ is not well-ordered} \Leftrightarrow \exists \text{infinite strict decreasing sequence in } \mathbb{N}^n. \quad
+\end{eqnarray}
+$\blacksquare$
+
+\subsubsection{Note}
+This lemma guarantees that several algorithms must terminate in a finite number of steps.
+At each step of the algorithm, some monomials strictly decrease with respect to a fixed monomial order.
+
+\subsection{Terminologies}
+Let 
+\begin{eqnarray}
+f = \sum_{\alpha} a_\alpha x^\alpha \in \mathbb{K}[x_1, \cdots, x_n]
+\end{eqnarray}
+be a nonzero polynomial, and $>$ is a (fixed) monomial order.
+
+The multi degree of $f$ is given by
+\begin{eqnarray}
+\label{multiDegree}
+MD(f) := \max \left( \alpha \in \mathbb{N}^n, a_\alpha \neq 0 \right) = \alpha_{\max} \in \mathbb{N}^n
+\end{eqnarray}
+with respect to the monomial order $>$.
+
+The leading coefficient of $f$ is
+\begin{eqnarray}
+LC(F) := a_{\alpha_{\max}} \in \mathbb{K}.
+\end{eqnarray}
+The leading monomial of $f$ is
+\begin{eqnarray}
+LM(f) := x^{\alpha_{\max}},
+\end{eqnarray}
+of course this is a term with 1 as its coefficient.
+The leading term of $f$ is
+\begin{eqnarray}
+LT(f) := LC(F) * LM(f) = a_{\alpha_{\max}} * x^{\alpha_{\max}}.
+\end{eqnarray}
+
+\subsection{Lemma (Multiplications and summations)}
+\label{multiplication}
+Let $f, g \in \mathbb{K}[x_1, \cdots, x_n]$ be nonzero polynomial.
+Then
+\begin{eqnarray}
+MD(f * g) = MD(f) + MD(g),
+\end{eqnarray}
+and if $f+g \neq 0$, then
+\begin{eqnarray}
+MD(f+g) \leq \max(MD(f), MD(g)).
+\end{eqnarray}
+If, in addition, $MD(f) \neq MD(g)$, then equality holds.\footnote{In this case, there is no cancellation on the leading terms.}
+
+\subsubsection{Proof}
+Let us write
+\begin{eqnarray}
+f &=& a_{\alpha_{\max}} * x^{\alpha_{\max}} + O(x^{\alpha_{\max}-1}) \\
+g &=& b_{\beta_{\max}} * x^{\beta_{\max}} + O(x^{\beta_{\max}-1})
+\end{eqnarray}
+then clearly
+\begin{eqnarray}
+f*g = a_{\alpha_{\max}} * b_{\beta_{\max}} * x^{\alpha_{\max}+\beta_{\max}} + O(x^{\alpha_{\max}-1+\beta_{\max} -1})
+\end{eqnarray}
+and
+\begin{eqnarray}
+f + g =  a_{\alpha_{\max}} * x^{\alpha_{\max}} + O(x^{\alpha_{\max}-1}) + b_{\beta_{\max}} * x^{\beta_{\max}} + O(x^{\beta_{\max}-1}) 
+\end{eqnarray}
+There might be a cancellation on the leading terms.\\
+$\blacksquare$
+
+%\section{Division algorithm in}% $\mathbb{K}[x_1, \cdots, x_n]$}
+\section{Division algorithm in $\mathbb{K}[x_1, ... , x_n]$}
+\subsection{"is divisible by" as a binary relation}
+\label{isDivisibleBy}
+Define a binary relation $\sqsupseteq$ ("is divisible by") on $\mathbb{K}[x_1, \cdots, x_n]$ by $\forall r,f \in \mathbb{K}[x_1, \cdots, x_n]$,
+\begin{eqnarray}
+r \sqsupseteq f :\Leftrightarrow \exists q \in \mathbb{K}[x_1, \cdots, x_n], r = q*f.
+\end{eqnarray}
+i.e. $r$ is divisible by $f$ iff there is some polynomial $q$ and $r = q*f$.\footnote{$r|f$ is the usual notation for "is divisible", but I would like to use an asymmetric notation for such an asymmetric binary relation.}
+
+Let us write the negation:
+\begin{eqnarray}
+r \sqsubset f :\Leftrightarrow \nexists q \in \mathbb{K}[x_1, \cdots, x_n], r = q*f
+\end{eqnarray}
+i.e. $r$ is not divisible by f.
+
+%\subsection{Division algorithm in }%$\mathbb{K}[x_1, \cdots, x_n]$}
+\subsection{Division algorithm in $\mathbb{K}[x_1, ... , x_n]$}
+\label{DivisionAlgorithmInN}
+Let $>$ be a (fixed) monomial order\footnote{We will introduce some monomial orders in \S\ref{MonomialOrders}.} and $(\mathbb{N}^n, >)$ be well-ordered, and
+\begin{eqnarray}
+F := (f_1, \cdots, f_s)
+\end{eqnarray}
+be an ordered $s$-tuple (or a list) of polynomials in $\mathbb{K}[x_1, \cdots, x_n]$.
+Then $\forall f \in \mathbb{K}[x_1, \cdots, x_n]$,
+\begin{eqnarray}
+\exists a_i, r  \in \mathbb{K}[x_1, \cdots, x_n] \text{ s.t. } f = a_1*f_1 + \cdots + a_s * f_s + r,
+\end{eqnarray}
+and either $r=0$ or $r$ is a linear combination, with coefficients in $\mathbb{K}$, of monomials, none of which is divisible by any of $LT(f_1), \cdots, LT(f_s)$:\footnote{See \S\ref{isDivisibleBy}}
+\begin{eqnarray}
+\label{remainderHasSmallerMultiDegree}
+r \sqsubset LT(f_1), \cdots, \text{ and } r \sqsubset LT(f_s).
+\end{eqnarray}
+Furthermore, if $a_i f_i \neq 0$., then we have \footnote{This is notation abuse, $\geq$ means $>$ or $=$ (as an ordered monomial $\mathbb{N}^n$).}
+\begin{eqnarray}
+\label{decreasingMultiDegree}
+MD(f) \geq MD(a_i * f_i)
+\end{eqnarray}
+with respect to the fixed monomial order.
+
+\newpage
+\subsubsection{Pseudo code}
+\begin{verbatim}
+Input: f_1 .. f_s,f
+Output: a_1 .. a_s,r
+a_1 := 0; ..; a_s := 0; r := 0
+p := f
+
+WHILE p /= 0 DO
+  i := 1
+  divisionOccured := False
+  WHILE i <= s AND divisionOccured = False DO
+    IF LT(f_i) divides p THEN
+      a_i := a_i + LT(p) / LT(f_i)
+      p   := p - (LT(p) / LT(f_i)) * f_i
+      divisionOccured := True
+    Else
+      i := i + 1
+  IF divisionOccured = False THEN
+    r := r + LT(p)
+    p := p - LT(p)
+\end{verbatim}
+
+\subsubsection{Proof}
+To prove that the above algorithm works, we'll first show that
+\begin{eqnarray}
+\label{intermediateRepresentation}
+f = a_1*f_1 + \cdots + a_s * f_s + p + r
+\end{eqnarray}
+holds at every stage, by induction on steps.
+This is clearly true for the initial values of $a_1, \cdots, a_s (= 0),p(=f),r(=0)$.
+Suppose eq.(\ref{intermediateRepresentation}) holds at one step of the algorithm.
+If the next step is a Division Step, i.e.,
+\begin{eqnarray}
+\verb|LT(f_i) divides p|
+\end{eqnarray}
+then the following combination
+\begin{eqnarray}
+a_i f_i + p = \left(a_i + \frac{LT(p)}{LT(f_i)} \right) * f_i + \left(p - \frac{LT(p)}{LT(f_i)}* f_i \right)
+\end{eqnarray}
+stays unchanged.
+Since all other variables are unaffected, eq.(\ref{intermediateRepresentation}) remains true in this case.
+
+On the other hand, if the next step is a Remainder Step, then both $r$ and $p$ will be changed, 
+\begin{eqnarray}
+\verb|r := r + LT(p)| \\
+\verb|p := p - LT(p)|
+\end{eqnarray}
+but the sum is unchanged:
+\begin{eqnarray}
+r+p = \left(r + LT(p) \right) + \left( r + LT(p)\right).
+\end{eqnarray}
+Also eq.(\ref{intermediateRepresentation}) remains true in this case.
+
+Note that this algorithm comes to halt when $p=0$, see the first \verb|WHILE| statement.
+In this situation (when $p=0$), eq.(\ref{intermediateRepresentation}) becomes
+\begin{eqnarray}
+f = a_1*f_1 + \cdots + a_s * f_s + r.
+\end{eqnarray}
+
+Finally, we need to show that this algorithm will terminate.
+The key observation is the rewriting process:
+\begin{eqnarray}
+\verb| p := p - (LT(p) / LT(f_i)) * f_i |
+\end{eqnarray}
+By Lemma in \S\ref{multiplication},
+\begin{eqnarray}
+LT \left( \frac{LT(p)}{LT(f_i)} * f_i \right) = \frac{LT(p)}{LT(f_i)} * LT(f_i) = LT(p).
+\end{eqnarray}
+If $p$ becomes $0$ in this process, then this algorithm halts.
+Even if $p \neq 0$, the leading term will vanish, and the multi degree must decrease strictly.
+
+If this algorithm never terminated, that is, we never meet $p =0$, then we could get an infinite decreasing sequence of multi degrees.
+But since our monomial order satisfies eq.(\ref{wellOrderedMonomialOrder}), i.e. $\forall$ strict decreasing sequence will terminate (as \S\ref{wellOrderingCondition}) and eventually $p = 0$. 
+
+Finally, consider $MD(f)$ and $MD(a_i f_i)$.
+Every term in $a_i$ is of the form 
+\begin{eqnarray}
+\frac{LT(p)}{LT(f_i)}
+\end{eqnarray}
+for some $p$.
+Above algorithm starts with $p = f$ and the multi degree of $p$'s are decreasing:
+\begin{eqnarray}
+MD(f = p) > MD(p') > \cdots.
+\end{eqnarray}
+This shows that for every step, either $>$ or $=$ holds
+\begin{eqnarray}
+MD(f) \geq MD(p)
+\end{eqnarray}
+and
+\begin{eqnarray}
+MD(a_i f_i) = MD\left(\frac{LT(p)}{LT(f_i)}* f_i \right) = MD(p) \leq MD(f) 
+\end{eqnarray}
+$\blacksquare$
+
+\subsection{The ideal membership problems}
+\label{membership}
+As a consequence of the above division algorithm \S\ref{DivisionAlgorithmInN} in multi-variables is the followings; if after division of $f$ by the ordered tuple $F := (f_1, \cdots, f_s)$ we obtain $r=0$, then we have
+\begin{eqnarray}
+f = a_1 * f_1 + \cdots a_t * f_t.
+\end{eqnarray}
+Thus $r = 0$ is a sufficient condition for ideal membership:
+\begin{eqnarray}
+r = 0 \Rightarrow f \in \left< f_1, \cdots, f_s \right>.
+\end{eqnarray}
+However, we'll see soon, $r=0$ is not a necessary condition for being in the ideal.\footnote{We'll find the iff condition for an ideal membership in \S\ref{IMC}, using Gr\"obner basis.}
+
+\subsubsection{Example}
+Let us consider $\mathbb{K}[x,y]$ with lex order and
+\begin{eqnarray}
+f_1 &:=& x*y + 1\\
+f_2 &:=& y^2 -1
+\end{eqnarray}
+Dividing
+\begin{eqnarray}
+f = x*y^2 -x
+\end{eqnarray}
+by an ordered 2-tuple $(f_1, f_2)$, the result is
+\begin{eqnarray}
+f &=& x*y^2 -x \\
+&=& y*(f_1 -1) -x \\
+&=& y*f_1 -x-y.
+\end{eqnarray}
+On the other hand, by $(f_2, f_1)$, the result is
+\begin{eqnarray}
+f &=& x*y^2 -x \\
+&=& x*(f_2 + 1) -x \\
+&=& x*f_2 + 0\\
+\Rightarrow f &\in& \left< f_1, f_2\right>.
+\end{eqnarray}
+Thus, the first trial show that even if $f \in \left< f_1, f_2\right>$, the reminder can be non zero.\\
+$\blacksquare$
+
+\section{Monomial Ideals and Dickson's Lemma}
+\subsection{Definition of monomial ideals}
+$I \subset \mathbb{K}[x_1, \cdots, x_n]$ is a monomial ideal iff the elements can be written as a finite sum form:
+\begin{eqnarray}
+\exists A \subset \mathbb{N}^n \text{ s.t. } I = \left\{\left. \sum_{i=1}^s h_i * x^{\alpha(i)} \right| \alpha(i) \in A, h_i \in \mathbb{K}[x_1, \cdots, x_n] \right\}
+\end{eqnarray}
+Then we write as a generator form:
+\begin{eqnarray}
+I := \left<\left. x^\alpha \right| \alpha \in A\right>
+\end{eqnarray}
+
+\subsection{Monomial ideal memberships}
+\label{Lemma2OfSection2_3}
+Let $I = \left<\left. x^\alpha \right| \alpha \in A\right> \subset \mathbb{K}[x_1, \cdots, x_n]$ be a monomial ideal.
+Then a monomial $x^\beta$ is in $I$ iff 
+\begin{eqnarray}
+\exists \alpha \in A \text{ s.t. } x^\beta \sqsupseteq x^\alpha
+\end{eqnarray}
+i.e., $x^\beta$ is divisible by some $x^\alpha \in I$.
+
+\subsubsection{Proof}
+($\Leftarrow$)
+If $x^\beta \sqsupseteq x^\alpha$, then there is some $h \in \mathbb{K}[x_1, \cdots, x_n]$ s.t.,
+\begin{eqnarray}
+x^\beta = h * x^\alpha.
+\end{eqnarray}
+So clearly $x^\beta \in I$ by the definition of ideal.
+
+($\Rightarrow$)
+Conversely, if $x^\beta \in I$, then we have an expression for $x^\beta$:
+\begin{eqnarray}
+x^\beta = \sum_{i=1}^s h_i * x^{\alpha(i)}
+\end{eqnarray}
+Now our generating set
+\begin{eqnarray}
+\left\{x^{\alpha(1)}, \cdots, x^{\alpha(s)} \right\}
+\end{eqnarray}
+is finite by definition of monomial ideals.
+From the well-ordered property of our monomial order, this generating set has the minimum element.
+Without loss of generality, we can put $\alpha(1)$ is the minimum\footnote{Indeed, we can put this generating set as $\left\{x^{\alpha(1)}< \cdots < x^{\alpha(s)} \right\}$.} and $h_1 \neq 0$, then
+\begin{eqnarray}
+x^\beta \sqsupseteq x^{\alpha(1)}.
+\end{eqnarray}
+$\blacksquare$
+
+\subsection{Dickson's Lemma}
+\label{Dickson}
+Let $I = \left<\left. x^\alpha \right| \alpha \in A\right> \subset \mathbb{K}[x_1, \cdots, x_n]$ be a monomial ideal.
+Then
+\begin{eqnarray}
+\exists \text{ finite } s \in \mathbb{N}, I = \left<x^{\alpha(1)}, \cdots, x^{\alpha(s)} \right>,
+\end{eqnarray}
+where $x^{\alpha(1)}, \cdots, x^{\alpha(s)} \in A$.
+That is, every monomial ideal has a finite number of monomial generators.
+
+\subsubsection{Proof}
+By induction on $n$.\footnote{Here we uses the well-ordering property of $\mathbb{N}$.}
+
+$n=1$ case, $I = \left<\left. x_1^{\alpha(1)} \right| {\alpha(1)} \in A \subset \mathbb{N} \right>$.
+Then just take the smallest $\beta \in A$ and 
+\begin{eqnarray}
+I = \left< x_1^\beta \right>.
+\end{eqnarray}
+
+Now assume that $n>1$ and this theorem holds for up to $n-1$.
+Consider the following form of monomial
+\begin{eqnarray}
+x^\alpha * y^m \in \mathbb{K}[x_1, \cdots, x_{n-1},y],
+\end{eqnarray}
+where
+\begin{eqnarray}
+\alpha \in \mathbb{N}^{n-1}, m \in \mathbb{N}.
+\end{eqnarray}
+and a monomial ideal
+\begin{eqnarray}
+I \subset \mathbb{K}[x_1, \cdots, x_{n-1},y].
+\end{eqnarray}
+Define an ideal in $\mathbb{K}[x_1, \cdots, x_{n-1}]$ (not in $\mathbb{K}[x_1, \cdots, x_{n-1}, y]$):
+\begin{eqnarray}
+J := \left\{ \left. x^\alpha \in \mathbb{K}[x_1, \cdots, x_{n-1}] \right| \exists m \in \mathbb{N} \text{ s.t. } x^\alpha y^m \in I \right\}
+\end{eqnarray}
+By our inductive hypothesis, there is a finite $s$ s.t.
+\begin{eqnarray}
+J = \left<x^{\alpha(1)}, \cdots, x^{\alpha(s)} \right>.
+\end{eqnarray}
+
+From this construction, $\forall \left. \alpha(i) \right|_{i=1}^s, \exists m_i \in \mathbb{N}$ s.t. $x^{\alpha(i)} y^{m_i} \in I$.
+Now we can take 
+\begin{eqnarray}
+m := \max\left(\left. m_i \right|_{i=1}^s \right).
+\end{eqnarray}
+$0 \leq \forall j \leq m-1$, define an ideal in $\mathbb{K}[x_1, \cdots, x_{n-1}]$:
+\begin{eqnarray}
+J_j := \left\{ \left. x^\beta \in \mathbb{K}[x_1, \cdots, x_{n-1}] \right| x^\beta * y^j \in I \right\}.
+\end{eqnarray}
+Using our inductive hypothesis, again, we get a finite $s_j$:
+\begin{eqnarray}
+J_j =  \left<x^{\alpha_j(1)}, \cdots, x^{\alpha_j(s_j)} \right>.
+\end{eqnarray}
+
+Define a union of above generators
+\begin{eqnarray}
+\tilde{J} := \{ x^{\alpha(1)}, \cdots, x^{\alpha(s)}, x^{\alpha_0(1)}, \cdots, x^{\alpha_{m-1}(s_{m-1})}\} 
+\end{eqnarray}
+and write $\left< \tilde{J} \right>$ is an ideal generated by the elements of $\tilde{J}$.
+From above construction, $\left< \tilde{J} \right>$ is a monomial ideal and
+\begin{eqnarray}
+\label{JJsubsetI}
+\left< \tilde{J} \right> \subset I.
+\end{eqnarray}
+
+Then we can show that $\forall $monomial in $I$ is divisible by one of the element of $\tilde{J}$.
+Since, $\forall x^\alpha * y^p \in I$, if $p \geq m$,
+\begin{eqnarray}
+x^\alpha * y^p  \sqsupseteq \exists x^{\alpha(i)} * y^m \in \left< \tilde{J} \right>,
+\end{eqnarray}
+else (i.e., $0 \leq p \leq m-1$),
+\begin{eqnarray}
+x^\alpha y^p  \sqsupseteq \exists x^{\alpha_p(j)} y^p \in J_p.
+\end{eqnarray}
+(In both case, $y$ part is done, and $x$ part is from the inductive hypothesis.)
+
+Let us prove $\left< \tilde{J} \right> = I$.
+Since $\forall f \in I$ of monomial ideal is written as the finite sum of monomials with appropriate factors:
+\begin{eqnarray}
+f = \sum_{\alpha,p} h_{\alpha,p} * x^\alpha * y^p, h_{\alpha,p} \in \mathbb{K}[x_1, \cdots, x_{n-1},y]
+\end{eqnarray}
+$\forall$ monomial $x^\alpha y^p$ of above is divisible by $\left< \tilde{J} \right>$, and this shows that
+\begin{eqnarray}
+I \subset \left< \tilde{J} \right>.
+\end{eqnarray}
+%In addition to the consequence we've got in eq.(\ref{JJsubsetI}), we get
+Therefore,
+\begin{eqnarray}
+I = \left< \tilde{J} \right>.
+\end{eqnarray}
+$\blacksquare$
+
+\subsection{$(\mathbb{N}^n, >)$ is well-ordering iff "positive definite"}
+\label{WellOrderingIffPD}
+Consider $(\mathbb{N}^n, >)$ of a binary relation.
+If two conditions hold, 
+\begin{eqnarray}
+> \text{ is total order} \\
+\forall \alpha,\beta,\gamma \in \mathbb{N}^n, \alpha > \beta \Rightarrow \alpha + \gamma > \beta + \gamma
+\end{eqnarray}
+then \footnote{We abuse 0; $0 \in \mathbb{N}^n$.} the followings are equivalent:
+\begin{eqnarray}
+\label{simpleWOProperty}
+(\mathbb{N}^n, >) \text{ is well-ordering } \Leftrightarrow \forall \alpha \in \mathbb{N}^n, \alpha \geq 0.
+\end{eqnarray}
+
+\subsubsection{Proof}
+($\Rightarrow$)
+Assume $(\mathbb{N}^n, >)$ be well-ordering, then we can pick a minimum element:
+\begin{eqnarray}
+\alpha_0 \in \mathbb{N}^n \text{ s.t. } \forall \alpha \in \mathbb{N}^n, \alpha_0 \leq \alpha
+\end{eqnarray}
+It suffices to show that $0 \geq \alpha_0$; if $0 > \alpha_0$ were true, using the second assumption,
+\begin{eqnarray}
+\alpha_0 = 0 + \alpha_0 > \alpha_0 + \alpha_0 = 2\alpha_0
+\end{eqnarray}
+i.e., $2\alpha_0$ became smaller than the minimum $\alpha_0$, contradiction.
+So,
+\begin{eqnarray}
+0 \leq \alpha_0.
+\end{eqnarray}
+
+($\Leftarrow$)
+Assume $\forall \alpha \in \mathbb{N}^n, \alpha \geq 0$.
+Let
+\begin{eqnarray}
+(\emptyset \neq )A \subset \mathbb{N}^n
+\end{eqnarray}
+be a non-empty subset and we shall prove $\exists$ a smallest element of $A$.
+
+Consider an ideal of A:
+\begin{eqnarray}
+I := \left< \left. x^\alpha \right| \alpha \in A\right> 
+\end{eqnarray}
+By Dickson's lemma, there is a finite generator:
+\begin{eqnarray}
+I = \left< x^{\alpha(1)}, \cdots, x^{\alpha(s)} \right> 
+\end{eqnarray}
+We can replace the order of such generators by using the monomial total\footnote{By definition, our monomial order is total.} order $<$, 
+\begin{eqnarray}
+I = \left< x^{\alpha(1)} < \cdots< x^{\alpha(s)} \right> 
+\end{eqnarray}
+
+Now we can proove $x^{\alpha(1)}$ of the smallest generator is the smallest element of $I$, and this is the same as $\alpha(1) \in A$ is the smallest.
+Since $\forall \alpha \in A$,
+\begin{eqnarray}
+x^\alpha \in I = \left< x^{\alpha(1)} < \cdots< x^{\alpha(s)} \right>,
+\end{eqnarray}
+and from the lemma \S\ref{Lemma2OfSection2_3}, $1 \leq \exists i \leq s$,
+\begin{eqnarray}
+x^\alpha \sqsupseteq x^{\alpha(i)}
+\end{eqnarray}
+and this means
+\begin{eqnarray}
+\exists \gamma \in \mathbb{N}^n \text{ s.t. } \alpha = \alpha(i) + \gamma.
+\end{eqnarray}
+By our hypothesis, $\gamma \geq 0$, so if $\gamma > 0$,
+\begin{eqnarray}
+\alpha = \alpha(i) + \gamma > \alpha(i) + 0 =  \alpha(i) \geq \alpha(1).
+\end{eqnarray}
+else $\gamma = 0$,
+\begin{eqnarray}
+\alpha = \alpha(i) + \gamma = \alpha(i) + 0 =  \alpha(i) \geq \alpha(1).
+\end{eqnarray}
+This means $\alpha(1)$ is the smallest element of given $A$.\\
+$\blacksquare$
+
+\subsection{Another definition of monomial orders}
+As a result of the proof in \S\ref{WellOrderingIffPD}, we can simplify the monomial order $(\mathbb{N}^n, >)$ in \S\ref{DefOfMonomialOrder}, we can replace the 3rd condition by eq.(\ref{simpleWOProperty}) of "positive definite":
+
+A monomial order on $\mathbb{K}[x_1, \cdots, x_n]$ is a relation $>$ on $\mathbb{N}^n$, or on a set $\{x^\alpha | \alpha \in \mathbb{N}^n \}$, satisfying
+\begin{eqnarray}
+\text{$(\mathbb{N}^n, >)$ is totally ordered} \\
+\alpha > \beta, \gamma \in \mathbb{N}^n \Rightarrow \alpha + \gamma > \beta + \gamma \\
+\forall \alpha \in \mathbb{N}^n, \alpha \geq 0.
+\end{eqnarray}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\subsection{Monomial orders in}% $\mathbb{K}[x_1, \cdots, x_n]$}
+\subsection{Monomial orders in $\mathbb{K}[x_1, ... , x_n]$}
+\label{MonomialOrders}
+We introduce some important instances of monomial orders.
+
+\subsubsection{Lexicographic order $>_{lex}$}
+For $\alpha := (\alpha_1, \cdots, \alpha_n), \beta := (\beta_1, \cdots, \beta_n) \in \mathbb{N}^n$, we say $\alpha >_{lex} \beta$ iff, in the "vector" difference
+\begin{eqnarray}
+(\alpha_1- \beta_1, \cdots, \alpha_n -\beta_n)
+\end{eqnarray}
+the leftmost nonzero entry is positive.
+\begin{eqnarray}
+x * y^2 &>_{lex}& y^3 * z^4 \\
+x^3 * y^2 * z^4 &>_{lex}& x^3 * y^2 * z \\
+x &>_{lex}& y
+\end{eqnarray}
+
+In the following (real) code, we assume the length of the list is the same:\footnote{
+We use builtin list as an expression for a monomial in Haskell:
+\begin{eqnarray}
+x^\alpha = x_1^{\alpha_1} * \cdots * x_n^{\alpha_n} \to [\alpha_1, \cdots, \alpha_n]
+\end{eqnarray}
+}
+
+\begin{verbatim}
+> type Monomial = [Int]
+
+> lexO :: Monomial -> Monomial -> Ordering
+> lexO [] [] = EQ
+> lexO (a:as) (b:bs)
+>   | a > b = GT
+>   | a < b = LT
+>   | otherwise = lexO as bs
+
+  *MonomialOrder> lexO [1,2,0] [0,3,4]
+  GT
+  *MonomialOrder> lexO [3,2,4] [3,2,1]
+  GT
+  *MonomialOrder> lexO [1,0,0] [0,1,0]
+  GT
+\end{verbatim}
+
+\paragraph{$>_{lex}$ is a monomial ordering}
+Since the number of variables is finite ($n$ in $\mathbb{K}[x_1, \cdots, x_n]$), the above algorithm will terminate, i.e., all two monomials $\alpha, \beta$ are in one of
+\begin{eqnarray}
+\alpha >_{lex} \beta, \alpha = \beta, \beta >_{lex} \alpha.
+\end{eqnarray}
+So $>_{lex}$ is total.
+
+Since for every entry of $\forall \gamma$, 
+\begin{eqnarray}
+(\alpha_i + \gamma_i) - (\beta_i + \gamma_i) = \alpha_i  - \beta_i,
+\end{eqnarray}
+we have $\forall \gamma$, 
+\begin{eqnarray}
+\alpha >_{lex} \beta \Leftrightarrow \alpha + \gamma >_{lex} \beta + \gamma.
+\end{eqnarray}
+
+Finally, for every entry,
+\begin{eqnarray}
+\alpha_i = \alpha_i - 0 \geq 0 \Leftrightarrow \alpha \geq_{lex} 0
+\end{eqnarray}
+since all the entry in $\alpha$ is positive definite in $\mathbb{N}$.
+Therefore, $>_{lex}$ is a monomial ordering.\\
+$\blacksquare$
+
+\subsubsection{Graded Lexicographic order $>_{grlex}$}
+For $\alpha, \beta \in \mathbb{N}^n$, define $\alpha >_{grlex} \beta$ iff
+\begin{eqnarray}
+|\alpha| > |\beta|
+\end{eqnarray}
+or
+\begin{eqnarray}
+|\alpha| = |\beta| \text{ and } \alpha >_{lex} \beta
+\end{eqnarray}
+where
+\begin{eqnarray}
+|\alpha| := \sum_{i} \alpha_i.
+\end{eqnarray}
+\begin{eqnarray}
+x * y^2 &>_{grLex}& y^3 * z^4 \\
+x^3 * y^2 * z^4 &>_{grLex}& x^3 * y^2 * z \\
+x &>_{grLex}& y
+\end{eqnarray}
+
+\begin{verbatim}
+> grLex :: Monomial -> Monomial -> Ordering
+> grLex [] [] = EQ
+> grLex a b
+>   | sum a > sum b = GT
+>   | sum a < sum b = LT
+>   | otherwise = lexO a b
+  
+  *MonomialOrder> grLex [1,2,3] [3,2,0]
+  GT
+  *MonomialOrder> grLex [1,2,4] [1,1,5]
+  GT
+\end{verbatim}
+
+\paragraph{$>_{grLex}$ is a monomial ordering}
+$>_{grLex}$ is clearly total order, since the comparison process will terminate in finite steps.
+
+$\forall \gamma$, we have already seen $\alpha >_{lex} \beta \Leftrightarrow \alpha + \gamma >_{lex} \beta + \gamma$ in $>_{lex}$ case, and
+\begin{eqnarray}
+|\alpha + \gamma| > |\beta + \gamma| \Leftrightarrow |\alpha| > |\beta|
+\end{eqnarray}
+since $|\alpha + \gamma| = |\alpha| + |\gamma|$.
+So $\gamma \in \mathbb{N}^n$,
+\begin{eqnarray}
+\alpha >_{grLex} \beta \Leftrightarrow \alpha + \gamma >_{grLex} \beta + \gamma.
+\end{eqnarray}
+
+Finally, $\forall \alpha$ is positive definite,
+\begin{eqnarray}
+|\alpha| \geq 0 \Rightarrow \alpha \geq_{grLex} 0.
+\end{eqnarray}
+$\blacksquare$
+
+\subsubsection{Graded Reversed Lex}
+For $\alpha, \beta \in \mathbb{N}^n$, define $\alpha >_{grevlex} \beta$ iff
+\begin{eqnarray}
+|\alpha| > |\beta|
+\end{eqnarray}
+or
+\begin{eqnarray}
+|\alpha| = |\beta| \text{ and the rightmost nonzero entry of difference in $\mathbb{N}^n$ is negative.}  \qquad
+\end{eqnarray}
+\begin{eqnarray}
+x^4 * y^7 * z &>_{gRevLex}& x^4 * y^2 * z^3 \\
+x * y^5 * z^2 &>_{gRevLex}& x^4 * y * z^3
+\end{eqnarray}
+
+\begin{verbatim}
+> gRevLex :: Monomial -> Monomial -> Ordering
+> gRevLex [] [] = EQ
+> gRevLex a b
+>   | sum a > sum b = GT
+>   | sum a < sum b = LT
+>   | otherwise = helper (reverse a) (reverse b)
+>   where
+>     helper (a:as) (b:bs) 
+>       | a < b     = GT
+>       | otherwise = helper as bs
+
+  *MonomialOrder> gRevLex [4,7,1] [4,2,3]
+  GT
+  *MonomialOrder> gRevLex [1,5,2] [4,1,3]
+  GT
+\end{verbatim}
+
+\paragraph{$>_{gRevLex}$ is a monomial ordering}
+This comparison algorithm terminate finitely, so $>_{gRevLex}$ is a total order, and the comparison does not change under $\alpha, \beta \leftrightarrow \alpha + \gamma, \beta + \gamma$.
+In addition, $>_{gRevLex}$ is positive definite since
+\begin{eqnarray}
+|\alpha| \geq 0 \Rightarrow \alpha \geq_{grLex} 0.
+\end{eqnarray}
+$\blacksquare$
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\section{The Hilbert Basis Theorem and Gr\"obner Bases}
+\subsection{Definition of the ideal of leading terms}
+Let $I \subset \mathbb{K}[x_1, \cdots, x_{n}]$ be an ideal other than $\{0\}$.
+Define a set of leading terms of $I$, 
+\begin{eqnarray}
+LT(I) := \left\{ \left. LT(f) \right| f \in I \right\} 
+\end{eqnarray}
+and the ideal generated by that set:
+\begin{eqnarray}
+\left< LT(I) \right>  := \left< \left\{ \left. LT(f) \right| f \in I \right\} \right>.
+\end{eqnarray}
+
+\subsection{Trivial inclusion}
+\label{LargerLemma}
+For $I = \left< f_1, \cdots, f_s \right>$, then $\left< LT(f_1), \cdots, LT(f_s) \right> \subset \left< LT(I) \right>$.
+
+\subsubsection{Proof}
+By definition, the leading term of $f_1$ is
+\begin{eqnarray}
+LT(f_1) \in \left< LT(I) \right>.
+\end{eqnarray}
+This means $\forall$ generators of the ideal $\left< LT(f_1), \cdots, LT(f_s) \right>$ is in $\left< LT(I) \right>$, and
+\begin{eqnarray}
+\left< LT(f_1), \cdots, LT(f_s) \right> \subset \left< LT(I) \right>
+\end{eqnarray}
+$\blacksquare$
+
+\subsubsection{Example}
+$\left< LT(I) \right>$ can be strictly larger than $\left< LT(f_1), \cdots, LT(f_s) \right>$.
+
+Consider
+\begin{eqnarray}
+f_1 &:=& x^3-2*x*y \\
+f_2 &:=& x^2*y -2*y^2 + x \\
+I &:=& \left< f_1, f_2 \right>
+\end{eqnarray}
+and use the grlex ordering on monomial in $\mathbb{K}[x,y]$.
+Then we have
+\begin{eqnarray}
+-y * f_1+x * f_2 &=& -y * (x^3-2*x*y) + x * (x^2*y -2*y^2 + x) \qquad\qquad\\
+&=& x^2
+\end{eqnarray}
+so that
+\begin{eqnarray}
+x^2 \in I.
+\end{eqnarray}
+Thus
+\begin{eqnarray}
+LT(x^2) = x^2 \in \left< LT(I)  \right>,
+\end{eqnarray}
+but $x^2$ is not divisible by leading terms
+\begin{eqnarray}
+LT(f_1) &:=& x^3 \\
+LT(f_2) &:=& x^2 * y,
+\end{eqnarray}
+therefore,
+\begin{eqnarray}
+x^2 \notin \left< LT(f_1), LT(f_2)  \right>.
+\end{eqnarray}
+This example shows that
+\begin{eqnarray}
+\left< LT(f_1), LT(f_2)  \right> \subsetneq  \left< LT(I) \right>.
+\end{eqnarray}
+$\blacksquare$
+
+\subsection{$\left< LT(I) \right>$ is a monomial ideal, and finitely generated}
+\label{monomialIdeals}
+$\forall I \subset \mathbb{K}[x_1, \cdots, x_{n}]$ be an ideal, then
+\begin{eqnarray}
+\left< LT(I) \right>
+\end{eqnarray}
+is a monomial ideal, and there is a finite set of generators $\left< LT(I) \right> = \left< LT(g_1), \cdots, LT(g_t) \right>$.
+
+\subsubsection{Proof}
+By definition,
+\begin{eqnarray}
+\left< LT(I) \right>  := \left< \left\{ \left. LT(f) \right| f \in I \right\} \right>
+\end{eqnarray}
+and $\forall f \in I$,
+\begin{eqnarray}
+f \neq 0 \Rightarrow \exists c \in \mathbb{K}, \text{ s.t. } c* LT(f) \text{ is a monomial}.
+\end{eqnarray}
+If we write such a monomial $g$, then
+\begin{eqnarray}
+\left< LT(I) \right>  := \left< \left\{ \left. g \in I \right| g (\neq 0) \text{ is a monomial} \right\} \right>
+\end{eqnarray}
+i.e. $\left< LT(I) \right> $ is a monomial ideal.
+
+Since we have proved that $\left< LT(I) \right>$ is a monomial ideal, Dickson's lemma in \S\ref{Dickson} tells us that there is a finite number of monomials:
+\begin{eqnarray}
+\left< LT(I) \right> = \left< g_1, \cdots, g_t \right>,
+\end{eqnarray}
+but since $g$'s are monomials
+\begin{eqnarray}
+\left< LT(I) \right> = \left< LT(g_1), \cdots, LT(g_t) \right>.
+\end{eqnarray}
+$\blacksquare$
+
+\subsection{Hilbert Basis Theorem}
+\label{HilbertBasisTheorem}
+Every ideal $I \subset \mathbb{K}[x_1, \cdots, x_{n}]$ has a finite generators.
+
+\subsubsection{Proof}
+If $I = \{0\}$, this singleton set $\{0\}$ is certainly finite.\footnote{Here we have two different $\{0\}$, the first one is a trivial ideal (as a structured set), and the other one is a singleton set of zero.}
+
+If $I$ contains some nonzero polynomial, we can construct a finite generating set for $I$ as follows.
+By \S\ref{monomialIdeals}, there is a set of finite $g_1, \cdots, g_t \in I$ s.t. $\left< LT(I) \right> = \left< LT(g_1), \cdots, LT(g_t) \right>$.
+We claim that $I = \left< g_1, \cdots, g_t \right>$.
+
+Since each $g$'s are in $I$, 
+\begin{eqnarray}
+\label{HilbertSubset}
+\left< g_1, \cdots, g_t \right> \subset I.
+\end{eqnarray}
+
+Conversely, $\forall f \in I$, by the division algorithm in \S\ref{DivisionAlgorithmInN} we can divide f by the ideal $\left< g_1, \cdots, g_t \right>$:
+\begin{eqnarray}
+f = a_1 * g_1 + \cdots + a_t * g_t + r,
+\end{eqnarray}
+where no term of $r$ is divisible by $LT(g_1), \cdots, LT(g_t)$.
+Now
+\begin{eqnarray}
+r = f - \left( a_1 * g_1 + \cdots + a_t * g_t \right) \in I
+\end{eqnarray}
+If $r \neq 0$, then 
+\begin{eqnarray}
+LT(r) \in \left< LT(I) \right> = \left< LT(g_1), \cdots, LT(g_t) \right>,
+\end{eqnarray}
+but by \S\ref{Lemma2OfSection2_3}, there is some $LT(g_i)$ s.t.
+\begin{eqnarray}
+LT(r) \sqsupseteq LT(g_i)
+\end{eqnarray}
+since $\left< LT(g_1), \cdots, LT(g_t) \right>$ is an monomial ideal by \S\ref{monomialIdeals} and $LT(r)$ is a term (i.e., a monomial times a coefficient).
+This clearly contradicts our definition of remainder, and consequently,
+\begin{eqnarray}
+\label{nullRemainder}
+r = 0 \Leftrightarrow f = a_1 * g_1 + \cdots + a_t * g_t.
+\end{eqnarray}
+Thus
+\begin{eqnarray}
+f \in \left< g_1, \cdots, g_t \right>
+\end{eqnarray}
+and this means 
+\begin{eqnarray}
+\label{HilbertSupset}
+I \subset \left< g_1, \cdots, g_t \right>.
+\end{eqnarray}
+
+Finally we have
+\begin{eqnarray}
+\label{HilbertGenerators}
+I = \left< g_1, \cdots, g_t \right>.
+\end{eqnarray}
+$\blacksquare$
+
+\subsection{Definition of Gr\"obner basis}
+\label{DefOfGroebner}
+Let us fix a monomial order $>$.
+A finite subset of given ideal $I$
+\begin{eqnarray}
+G := \{g_1, \cdots, g_t\} \subset I
+\end{eqnarray}
+is a Gr\"obner basis iff 
+\begin{eqnarray}
+\left< LT(g_1), \cdots, LT(g_t) \right> = \left< LT(I)\right>
+\end{eqnarray}
+holds.\footnote{
+From \S\ref{LargerLemma}, we already have $\left< LT(g_1), \cdots, LT(g_t) \right> \subset \left< LT(I) \right>$, so $\left< LT(g_1), \cdots, LT(g_t) \right> \supset \left< LT(I) \right>$ is the essential condition for $G$ is a Gr\"obner basis.
+I personally call $G$ is "gr\"obner" if 
+\begin{eqnarray}
+\label{isGroebner}
+\left< LT(g_1), \cdots, LT(g_t) \right> \supset \left< LT(I) \right>
+\end{eqnarray}
+holds, (indeed $\left< LT(g_1), \cdots, LT(g_t) \right> = \left< LT(I) \right>$ holds).
+}
+
+Informally, a set $G := \{g_1, \cdots, g_t\} \subset I$ of generators is a Gr\"ober basis iff the leading of all element of $I$ is divisible by one of the $LT(g_i)$.
+
+% \subsubsection{Proof}
+
+\subsection{Every nontrivial ideal has a Gr\"obner basis}
+The proof of Hilbert Basis Theorem in \S\ref{HilbertBasisTheorem} also establishes the following result.
+
+Fix a monomial order $>$.
+All ideal $I \subset \mathbb{K}[x_1, \cdots, x_{n}]$ other than $\{0\}$ has a Gr\"obner basis.
+Furthermore, any Gr\"obner basis for an ideal $I$ is a basis of $I$.
+
+\subsubsection{Proof}
+Given a nonzero ideal $I$, take
+\begin{eqnarray}
+G = \{g_1, \cdots, g_t\}
+\end{eqnarray}
+of its Hilbert Basis which generates $I = \left< g_1, \cdots, g_t \right> (\ref{HilbertGenerators})$ (for the second claim).
+
+This Hilbert basis has the following property:
+\begin{eqnarray}
+\left< LT(I) \right> = \left< LT(g_1), \cdots, LT(g_t) \right>.
+\end{eqnarray}
+(see also \S\ref{monomialIdeals}).
+This is indeed the condition for being a Gr\"obner basis.\\
+$\blacksquare$
+
+\subsection{The Ascending Chain Condition}
+\label{ACC}
+Let
+\begin{eqnarray}
+I_0 \subset I_1 \subset I_2 \subset I_3 \subset \cdots.
+\end{eqnarray}
+be an ascending chain of ideals in $\mathbb{K}[x_1, \cdots, x_n]$.
+Then, there exists an $m \leq 1$ s.t.
+\begin{eqnarray}
+I_{m} = I_{m+1} = I_{m+2} \cdots.
+\end{eqnarray}
+That is, the ascending chain will have stabilized after finite steps $m$.
+
+\subsubsection{Proof}
+Given an ascending chain of ideal, let us define a set
+\begin{eqnarray}
+\label{BigI}
+I := \bigcup_{j\geq 0}^\infty I_j,
+\end{eqnarray}
+and we shall show that $I$ is an ideal.\footnote{ See the definition in \S\ref{DefOfIdeal}.}
+First, since $0 \in \forall I_j$ and $0\in I$.
+Next, if $f,g \in I$, then we can put 
+\begin{eqnarray}
+f \in I_j, g \in I_k, j \leq k,
+\end{eqnarray}
+without loss of generality.
+We have assumed that the chain is ascending, so $I_j \subset I_k$ and
+\begin{eqnarray}
+f,g \in I_k \Rightarrow f+g \in I_k
+\end{eqnarray}
+since $I_k$ is an ideal, and we get
+\begin{eqnarray}
+f+g \in I.
+\end{eqnarray}
+Similarly, $\forall f \in I$, there is $I_j$ s.t.
+\begin{eqnarray}
+f \in I_j \Rightarrow \forall h \in \mathbb{K}[x_1, \cdots, x_n], h*f \in I_j,
+\end{eqnarray}
+hence $\forall h \in \mathbb{K}[x_1, \cdots, x_n]$, 
+\begin{eqnarray}
+h*f \in I.
+\end{eqnarray}
+Therefore $I$ is an ideal.
+
+By the Hilbert Basis Theorem in \S\ref{HilbertBasisTheorem}, for this ideal, there is a finite generator:
+\begin{eqnarray}
+I = \left<f_1, \cdots, f_s \right>,
+\end{eqnarray}
+and each generator is in some ideal in the ascending chain:
+\begin{eqnarray}
+f_i \in I_{j_i}, 1 \leq \forall i \leq s, j_i \geq 1
+\end{eqnarray}
+We can take 
+\begin{eqnarray}
+m := \left. \max j_i \right|_i
+\end{eqnarray}
+for $1 \leq i \leq s$, and then
+\begin{eqnarray}
+I = \left<f_1, \cdots, f_s \right> \subset I_m \subset I_{m+1} \subset \cdots \subset I.
+\end{eqnarray}
+As a result, the ascending chain stabilizes with $I_m$ and 
+\begin{eqnarray}
+I = \left<f_1, \cdots, f_s \right> \subset I_m = I_{m+1} = \cdots = I.
+\end{eqnarray}
+$\blacksquare$
+
+\subsubsection{Note}
+This "every ascending chain of ideals in $\mathbb{K}[x_1, \cdots, x_{n}]$ stabilizes in finite steps" is often called the ascending chain condition (ACC).
+
+We have used the Hilbert basis in the proof of ACC, but ACC is, actually, equivalent to the Hilbert Basis Theorem.
+In \S\ref{MoreACC}, we will treat ACC more precisely.
+
+Here we prove Hilbert Basis Theorem without using Hilbert basis; if $I \subset \mathbb{K}[x_1, \cdots, x_{n}]$ is NOT finitely generated, then we can select an infinite generating sequence s.t., $I_i := \left<f_1, \cdots, f_i \right>$.
+This is an ascending chain of ideals $I_1 \subset I_2 \subset \cdots$ which does NOT stabilize, but it contradicts our ACC.\\
+$\blacksquare$
+
+
+\subsection{Definition of the affine variety of an ideal}
+Let $I \subset \mathbb{K}[x_1, \cdots, x_n]$ be an ideal.
+The affine variety $\mathbb{V}(I)$ of the ideal $I$ is defined by
+\begin{eqnarray}
+\mathbb{V}(I) := \left\{ \left. a \in \mathbb{K}^n \right| \forall f \in I, f(a) = 0\right\}.
+\end{eqnarray}
+
+\subsection{Varieties of ideals is well-defined}
+Let $\mathbb{V}(I)$ be an affine variety of an ideal $I$.
+Then, there is a finite generating set and
+\begin{eqnarray}
+\mathbb{V}(I) = \mathbb{V}(f_1, \cdots, f_s)
+\end{eqnarray}
+holds.\footnote{The left hand side is defined in \S\ref{DefOfAV}.}
+So, the varieties of ideals are well defined.
+
+\subsubsection{Proof}
+By the Hilbert Basis Theorem \S\ref{HilbertBasisTheorem}, we have a finite generator for the ideal $I$:
+\begin{eqnarray}
+I = \left< f_1, \cdots, f_s \right>.
+\end{eqnarray}
+
+$\forall a \in \mathbb{V}(I)$, by definition
+\begin{eqnarray}
+\forall f \in I, f(a) = 0,
+\end{eqnarray}
+and since $I = \left< f_1, \cdots, f_s \right>$, we get
+\begin{eqnarray}
+f_1(a) = \cdots = f_s(a) = 0.
+\end{eqnarray}
+Thus $a \in \mathbb{V}(f_1, \cdots, f_s)$ and
+\begin{eqnarray}
+\mathbb{V}(I) \subset \mathbb{V}(f_1, \cdots, f_s)
+\end{eqnarray}
+
+Conversely, $\forall a \in \mathbb{V}(f_1, \cdots, f_s)$, then by definition,
+\begin{eqnarray}
+f_1(a) = \cdots = f_s(a) = 0.
+\end{eqnarray}
+Since $I = \left< f_1, \cdots, f_s \right>$, we can write
+\begin{eqnarray}
+\forall f \in I, f = \sum_i h_i * f_i
+\end{eqnarray}
+and 
+\begin{eqnarray}
+\forall f \in I, f(a) = \sum_i h_i(a) * f_i(a) = \sum_i h_i(a) * 0 = 0.
+\end{eqnarray}
+This means that $a \in \mathbb{V}(I)$ and
+\begin{eqnarray}
+\mathbb{V}(I) \supset \mathbb{V}(f_1, \cdots, f_s)
+\end{eqnarray}
+
+Therefore we have
+\begin{eqnarray}
+\mathbb{V}(I) = \mathbb{V}(f_1, \cdots, f_s)
+\end{eqnarray}
+$\blacksquare$
+
+\section{Properties of Gr\"obner Bases}
+From this section, we will omit $*$ symbol to indicate the multiplication.
+
+\subsection{Unique reminder properties}
+\label{UniqueReminderProperties}
+Let
+\begin{eqnarray}
+G := \{g_1, \cdots, g_t\} \subset I
+\end{eqnarray}
+be a Gr\"obner basis\footnote{This inclusion is for underlying sets, so $G$ is just a set.} for an ideal $I \subset \mathbb{K}[x_1, \cdots, x_n]$.
+Then $\forall f \in \mathbb{K}[x_1, \cdots, x_n]$, there is a unique reminder $r \in \mathbb{K}[x_1, \cdots, x_n]$ with the following properies:
+\begin{enumerate}
+\item 
+\label{property1}
+No term of $r$ is divisible by any of $LT(g_1), \cdots, LT(g_t)$:
+\begin{eqnarray}
+r \sqsubset LT(g_1), \cdots, r \sqsubset LT(g_t).
+\end{eqnarray}
+
+\item 
+\label{property2}
+There is $g \in I$ s.t.
+\begin{eqnarray}
+f = g + r.
+\end{eqnarray}
+In particular, $r$ is "the" unique reminder on division of $f$ by $G$.\footnote{Here $G$ is just a set, not an ordered set, since this unique reminder does not depend on the order of $g_i$'s.}
+\end{enumerate}
+
+\subsubsection{Proof}
+The division algorithm in \S\ref{DivisionAlgorithmInN} gives us
+\begin{eqnarray}
+f = a_1 g_1 + \cdots + a_t g_t + r,
+\end{eqnarray}
+where $r$ satisfies \ref{property1}st condition.
+By putting
+\begin{eqnarray}
+g := a_1 g_1 + \cdots + a_t g_t,
+\end{eqnarray}
+we can also satisfy \ref{property2}nd condition.
+
+To prove the uniqueness, let us suppose
+\begin{eqnarray}
+g + r = f = g' + r'
+\end{eqnarray}
+satisfy both properties.
+Then we have
+\begin{eqnarray}
+g - g' = r' - r \in I.
+\end{eqnarray}
+If $r \neq r'$, then the leading term is in $\left< LT(I) \right>$:
+\begin{eqnarray}
+LT(r' - r) \in \left< LT(I) \right> = \left< LT(g_1), \cdots, LT(g_t) \right>.
+\end{eqnarray}
+Here we have assumed $G$ be a Gr\"obner basis (see the definition \S\ref{DefOfGroebner}), and this leads equality.
+That is, the monomial $LT(r' - r)$ is in the monomial ideal $\left< LT(g_1), \cdots, LT(g_t) \right>$.
+By \S\ref{Lemma2OfSection2_3}, it follows that
+\begin{eqnarray}
+1 \leq \exists i \leq t \text{ s.t. } LT(r' - r ) \sqsupseteq LT(g_i)
+\end{eqnarray}
+holds.\footnote{Pronounce it as "$LT(r' - r )$ is divisible by some $LT(g_i)$".}
+This, however, contradicts our division algorithm; no term in $r, r'$ is divisible by $LT(g_1), \cdots, LT(g_t)$.
+Therefore we have a unique reminder
+\begin{eqnarray}
+r' = r
+\end{eqnarray}
+and $g - g' = r' - r = 0$ implies
+\begin{eqnarray}
+g' = g.
+\end{eqnarray}
+$\blacksquare$
+
+\subsubsection{Note}
+This unique reminder properties is sometimes taken as the definition of a Gr\"ober basis.\footnote{We will summarize several equivalent statements for being Gr\"obner basis in \S\ref{severalIsGroebner}.}
+
+\subsection{Reminder and normal forms}
+\label{normalForms}
+The remainder $r$ is called the normal form of $f$ with respect to the Gr\"obner basis $G := \{g_1, \cdots, g_t\} $.
+
+We will write
+\begin{eqnarray}
+\bar{f}^F
+\end{eqnarray}
+as the remainder on division of $f$ by the ordered tuple \footnote{The remainder is also unique for the ordered tuple $F$.}
+\begin{eqnarray}
+F := (f_1, \cdots, f_s).
+\end{eqnarray}
+If $F$ is a Gr\"obner basis (for $f_1, \cdots, f_s$), then we can regard $F$ as merely a set, since we have shown the uniqueness of the reminder in \S\ref{UniqueReminderProperties}.
+
+Sometimes, we also write
+\begin{eqnarray}
+f \stackrel{F}{\to} r %:= \bar{f}^F
+\end{eqnarray}
+as a division process, $r$ is the reminder of $f$ by the tuple $F$.
+Using this notation, the property in \S\ref{UniqueReminderProperties} becomes the following statement; if $G$ is gr\"obner, then $\forall f \in \mathbb{K}[x_1, \cdots, x_n]$,
+\begin{eqnarray}
+\exists! r \in \mathbb{K}[x_1, \cdots, x_n] \text{ s.t. } f \stackrel{G}{\to} r.
+\end{eqnarray}
+
+\subsection{An ideal membership condition}
+\label{IMC}
+Let $G := \{g_1, \cdots, g_t\} $ be a Gr\"obner basis for an ideal $I \subset \mathbb{K}[x_1, \cdots, x_n]$.
+Then $f \in I$ iff the reminder on division of $f$ by $G$ is zero.
+
+\subsubsection{Proof}
+Now we have
+\begin{eqnarray}
+I = \left< g_1, \cdots, g_t\right>
+\end{eqnarray}
+of Gr\"obner basis for $I$.
+In \S\ref{membership} we have already proved $\Leftarrow$ part:
+\begin{eqnarray}
+f \in I \Leftarrow f = a_1 g_1 + \cdots + a_t g_t.
+\end{eqnarray}
+Conversely, given $f \in I$, then
+\begin{eqnarray}
+f = f+0
+\end{eqnarray}
+satisfies the two conditions in \S\ref{UniqueReminderProperties}.
+The uniqueness implies that the reminder is zero, therefore
+\begin{eqnarray}
+f \in I \Rightarrow f = a_1 g_1 + \cdots + a_t g_t.
+\end{eqnarray}
+$\blacksquare$
+
+\subsubsection{Note}
+This property is also sometimes taken as the definition of a Gr\"obner basis, since we can show \footnote{We will complete this statement in \S\ref{isGroebner2}.
+Here in \S\ref{IMC} we have proved $\Rightarrow$ part.
+} that it is true iff $G$ is "gr\"obner", i.e.,
+\begin{eqnarray}
+\left< LT(g_1), \cdots, LT(g_t) \right> = \left< LT(I)\right>
+\end{eqnarray}
+holds.\footnote{See the definition of Gr\"obner basis in \S\ref{DefOfGroebner}.}
+
+\subsection{Definition of S-polynomials}
+Consider nonzero polynomials $f,g \in \mathbb{K}[x_1, \cdots, x_n]$, and multi degrees
+\begin{eqnarray}
+\alpha := MD(f), \beta := MD(g),
+\end{eqnarray}
+then clearly,
+\begin{eqnarray}
+x^\alpha = LM(f), x^\beta = LM(g).
+\end{eqnarray}
+Define a multi index
+\begin{eqnarray}
+\gamma = (\gamma_1, \cdots, \gamma_n), \gamma_i := \max(\alpha_i, \beta_i),
+\end{eqnarray}
+and call
+\begin{eqnarray}
+x^\gamma 
+\end{eqnarray}
+the least common multiple of leading monomials $LM(f), LM(g)$:
+\begin{eqnarray}
+x^\gamma := LCM\left( LM(f), LM(g) \right).
+\end{eqnarray}
+
+Then we can define the S-polynomial of $f$ and $g$:
+\begin{eqnarray}
+S(f,g) := \frac{x^\gamma}{LT(f)} f - \frac{x^\gamma}{LT(g)} g 
+\end{eqnarray}
+As we will see, S-polynomial is designed to cancel the leading terms, moreover, all cancellation of leading terms among polynomials of the same multi degree result from the combination of S-polynomials.
+
+\subsection{S-polynomial of $I$ is in $I$}
+\label{SofIisInI}
+We will show the following property of S-polynomials for later use.
+\begin{eqnarray}
+\forall f,g \in I, S(f,g)\in I.
+\end{eqnarray}
+
+\subsubsection{Proof}
+Since $LG(f), LG(g) \sqsubseteq x^\gamma$ by definition of $\gamma$, and
+\begin{eqnarray}
+\frac{x^\gamma}{LT(f)}, \frac{x^\gamma}{LT(g)} \in \mathbb{K}[x_1, \cdots, x_n],
+\end{eqnarray}
+we get
+\begin{eqnarray}
+S(f, g) = \frac{x^\gamma}{LT(f)} f - \frac{x^\gamma}{LT(g)} g \in I.
+\end{eqnarray}
+Therefore, S-polynomial of $I$ is in $I$.\footnote{This if the sum of elements in $I$ with $\mathbb{K}[x_1, \cdots, x_n]$ "coefficients" form.}\\
+$\blacksquare$
+
+\subsection{Lemma}
+\label{buchbergerLemma}
+Suppose we have a sum
+\begin{eqnarray}
+\sum_{i=1}^s c_i f_i, c_i \in \mathbb{K}, 
+\end{eqnarray}
+where $\forall i$,
+\begin{eqnarray*}
+MD(f_i) = \delta \in \mathbb{N}^n.
+\end{eqnarray*}
+If the multi degree of this sum is strictly smaller than $\delta$\footnote{The cancellation of leading terms do occur.}
+\begin{eqnarray}
+\label{strictlySmallerMD}
+MD\left( \sum_{i=1}^s c_i f_i \right) < \delta,
+\end{eqnarray}
+then this sum $\sum_{i=1}^s c_i f_i$ is a linear combination, with $\mathbb{K}$ coefficients, of the S-polynomials
+\begin{eqnarray}
+S(f_j, f_k), 1 \leq j, k \leq s.
+\end{eqnarray}
+Furthermore, each $S(f_j, f_k)$,
+\begin{eqnarray}
+MD\left( S(f_j, f_k) \right) < \delta.
+\end{eqnarray}
+
+\subsubsection{Proof}
+Let $d_i = LC(f_i)$, so that
+\begin{eqnarray}
+c_i d_i = LC(c_i f_i).
+\end{eqnarray}
+Since all $c_i * f_i$ have multi degree $\delta$ and their sum has strictly smaller multi degree (eq.(\ref{strictlySmallerMD})).
+It follows that
+\begin{eqnarray}
+\sum_i c_i d_i = 0,
+\end{eqnarray}
+i.e., the leading coefficient is cancelled out.
+
+Define polynomials which has 1 as the leading coefficient:\footnote{Here we used the "small o notation" $o(x^\delta)$ to indicate the terms that have smaller multi degree than $x^\delta$.}
+\begin{eqnarray}
+p_i := f_i/d_i = x^\delta + o(x^\delta).
+\end{eqnarray}
+Consider the telescoping sum\footnote{
+From Wikipedia : \begin{quote}
+...whose partial sums eventually only have a fixed number of terms after cancellation.
+\end{quote}
+}
+\begin{eqnarray}
+\sum_{i=1}^s c_i f_i &=& \sum_{i=1}^s c_i d_i p_i \\
+\nonumber
+&=& c_1 d_1 (p_1 -p_2) + (c_1d_1 + c_2 d_2)(p_2 -p_3) + \cdots \\
+\nonumber
+&&+ (c_1d_1 + \cdots + c_{s-1} d_{s-1})(p_{s-1} - p_s) \\
+\nonumber
+&&+ (c_1d_1 + \cdots + c_s d_s) p_s \\
+\nonumber
+&=& c_1 d_1 (p_1 -p_2) + (c_1d_1 + c_2 d_2)(p_2 -p_3) + \cdots \\
+&&+ (c_1d_1 + \cdots + c_{s-1} d_{s-1})(p_{s-1} - p_s),
+\end{eqnarray}
+where we have used $\sum_i c_i * d_i = 0$.
+From our assumption, we have, $\forall i$,
+\begin{eqnarray}
+LT(f_i) = d_i x^\delta,
+\end{eqnarray}
+which implies that the least common multiple of $LT(f_j)$ and $LT(f_k)$ is $x^\delta$.
+Thus
+\begin{eqnarray}
+S(f_j, f_k) &=& \frac{x^\delta}{LT(f_j)}f_j- \frac{x^\delta}{LT(f_k)}f_k \\
+&=& \frac{x^\delta}{d_j x^\delta}f_j- \frac{x^\delta}{d_k x^\delta}f_k \\
+&=& p_j - p_k.
+\end{eqnarray}
+Here, the leading terms of $p_j, p_k$ are cancelled out and
+\begin{eqnarray}
+MD\left( S(f_j, f_k) \right) = MD(p_j -p_k) < \delta.
+\end{eqnarray}
+
+Now the above telescoping sum becomes
+\begin{eqnarray}
+\nonumber
+\sum_{i=1}^s c_i f_i &=& c_1 d_1 S(f_1, f_2) + (c_1d_1 + c_2 d_2)S(f_2, f_3) + \cdots\\
+&& + (c_1d_1 + \cdots + c_{s-1}d_{s-1}) S(f_{s-1}, f_s) \\
+&=:& \sum_{j,k} c_{j,k} S(f_j, f_k).
+\end{eqnarray}
+This \footnote{The last equality can be seen as the definition of $\mathbb{K}$ coefficients $c_{j,k}$'s.} is clearly a linear combination of the S-polynomials of $\mathbb{K}$ coefficients.\\
+$\blacksquare$
+
+\subsection{Buchberger's Criterion}
+\label{Buchberger'sCriterion}
+Let $I$ be a polynomial ideal.
+Then an ordered tuple of basis $G = (g_1, \cdots, g_t)$ for $I$ is a Gr\"obner basis for $I$ iff for all pairs $j \neq k$, the remainder on division $S(g_j, g_k)$ by $G$ is zero:\footnote{It seems like a Cauchy sequence.} 
+\begin{eqnarray}
+\text{$G$ is gr\"obner} \Leftrightarrow \forall j\neq k, S(g_j, g_k) \stackrel{G}{\to} 0.
+\end{eqnarray}
+
+\subsubsection{($\Rightarrow$) part} 
+From \S\ref{SofIisInI},
+\begin{eqnarray}
+S(g_j, g_k) = \frac{x^\gamma}{LT(g_j)} g_k - \frac{x^\gamma}{LT(g_k)} g_k \in I.
+\end{eqnarray}
+If $G$ is a Gr\"obner basis for $I$, the remainder on division by $G$ is 0 by \S\ref{IMC}.
+
+\subsubsection{($\Leftarrow$) part} 
+It suffices to show that if $ \forall j\neq k, S(g_j, g_k) \stackrel{G}{\to} 0$, then $\forall f \in I$, $LT(f) \in \left< LT(g_1), \cdots, LT(g_t) \right>$, i.e., $\left< LT(I) \right> \subset \left< LT(g_1), \cdots, LT(g_t) \right>$.\footnote{See the definition of Gr\"obner basis in \S\ref{DefOfGroebner}, or eq.(\ref{isGroebner}).
+}
+We have assumed that $G$ is a generator of $I$, so $\forall f \in I, \exists h_i$, s.t.,
+\begin{eqnarray}
+f = \sum_i h_i g_i.
+\end{eqnarray}
+
+\paragraph{Construction of $\delta_0$}
+Let us write
+\begin{eqnarray}
+m(i) &:=& MD(h_i g_i) \\
+\delta &:=& \left.\max\left(m(i) \right) \right|_i
+\end{eqnarray}
+then clearly
+\begin{eqnarray}
+\label{MDfleqDelta}
+MD(f) \leq \delta.
+\end{eqnarray}
+If $MD(f) < \delta$ then some cancellations of the leading terms must occur.
+
+There is at least one combination of $h_i$'s s.t. $f = \sum_i h_i g_i$, we can define the following non empty set:
+\begin{eqnarray}
+\left\{ \delta = \delta\left(\{h_i \right\}) \left| \forall \{h_i\} \text{ s.t. } f = \sum_i h_i g_i \right. \right\} \subset \mathbb{N}^n.
+\end{eqnarray}
+Since our monomial order is well-ordering,\footnote{See eq.(\ref{multiDegree}), multi degrees are essentially monomials.} we can pick up the minimal element, let's call it $\delta_0$.
+
+\paragraph{Lemma $(MD(f) = \delta_0)$}
+Since we still have $MD(f) \leq \delta_0$, we can decompose $f = \sum_i h_i g_i$ as
+\begin{eqnarray}
+\nonumber
+f &=& \sum_i h_i g_i \\
+\nonumber
+&=& \sum_{m(i) = \delta_0} h_i g_i + \sum_{m(i) < \delta_0} h_i g_i \\
+&=& \sum_{m(i) = \delta_0} LT(h_i) g_i + \sum_{m(i) = \delta_0} \left(h_i - LT(h_i) \right) g_i + \sum_{m(i) < \delta_0} h_i g_i \qquad
+\end{eqnarray}
+Both 2nd and 3rd terms clearly have strictly smaller multi degrees, e.g.,
+\begin{eqnarray}
+MD\left( h_i - LT(h_i) \right) < \delta_0.
+\end{eqnarray}
+Therefore, if $MD(f) < \delta_0$, then we have
+\begin{eqnarray}
+\label{keyUpperBound}
+MD\left( \sum_{m(i) = \delta_0} LT(h_i) g_i \right) < \delta_0
+\end{eqnarray}
+but we will see that $MD(f) < \delta_0$ contradicts our minimal assumption of $\delta_0$.
+
+Assuming $MD(f) < \delta_0$, all the terms in the 1st sum $\sum_{m(i) = \delta_0} LT(h_i) g_i $ have the same multi degree, since the summation is under $m(i) = \delta_0$:\footnote{The leading term carries the maximum monomial, so $m(i) = MD(h_i g_i) = MD\left( LT(h_i) g_i  \right)$.}
+\begin{eqnarray}
+MD\left( LT(h_i) g_i  \right) = \delta_0
+\end{eqnarray}
+This is the form of \S\ref{buchbergerLemma} with $c_i =1, f_i = LT(h_i) g_i$, and the lemma implies
+\begin{eqnarray}
+\sum_{m(i) = \delta_0} LT(h_i) g_i = \sum_{j,k}c_{j,k} S\left(LT(h_j) g_j, LT(h_k) g_k \right).
+\end{eqnarray}
+By definition, since the least common multiple of $LT(h_i) g_i$'s is $\delta_0$, 
+\begin{eqnarray}
+S\left(LT(h_j) g_j, LT(h_k) g_k \right) &=& \frac{x^{\delta_0}}{LT\left(LT(h_j) g_j \right)}LT(h_j) g_j - (j\to k) \qquad \\
+&=& \frac{x^{\delta_0}}{LT(h_j) LT\left( g_j \right)}LT(h_j) g_j - (j\to k) \\
+&=& \frac{x^{\delta_0}}{LT\left( g_j \right)} g_j - (j\to k) \\
+&=& x^{\delta_0 - \gamma_{j,k}} S(g_j, g_k),
+\end{eqnarray}
+where
+\begin{eqnarray}
+\gamma_{j,k} := LCM\left(LM(g_j), LM(g_k) \right).
+\end{eqnarray}
+The 1st sum becomes
+\begin{eqnarray}
+\label{semiFinalResult}
+\sum_{m(i) = \delta_0} LT(h_i) g_i = \sum_{j,k}c_{j,k} x^{\delta_0 - \gamma_{j,k}} S(g_j, g_k).
+\end{eqnarray}
+%and
+%\begin{eqnarray}
+%f = \sum_{j,k}c_{j,k} x^{\delta_0 - \gamma_{j,k}} S(g_j, g_k) + \sum_{m(i) = \delta_0} \left(h_i - LT(h_i) \right) g_i + \sum_{m(i) < \delta_0} h_i g_i. \qquad
+%\end{eqnarray}
+
+Now we use our hypothesis $S(g_j, g_k) \stackrel{G}{\to} 0$, i.e., the division algorithm implies that there exists $a_{i,j,k} \in \mathbb{K}[x_1, \cdots, x_n]$ s.t.
+\begin{eqnarray}
+S(g_j, g_k) = \sum_{i} a_{i,j,k} g_i
+\end{eqnarray}
+By eq.(\ref{decreasingMultiDegree}), we have
+\begin{eqnarray}
+\label{MDSgeqAG}
+MD\left(S(g_j, g_k) \right) \geq MD( a_{i,j,k} g_i).
+\end{eqnarray}
+Therefore, the right hand side of eq.(\ref{semiFinalResult}) becomes
+\begin{eqnarray}
+c_{j,k} x^{\delta_0 - \gamma_{j,k}} \sum_{i} a_{i,j,k} g_i = \sum_i c_{j,k} (x^{\delta_0 - \gamma_{j,k}} a_{i,j,k}) g_i
+= \sum_{i} c_{j,k} b_{i,j,k} g_i,
+\end{eqnarray}
+where
+\begin{eqnarray}
+b_{i,j,k} := x^{\delta_0 - \gamma_{j,k}} a_{i,j,k}.
+\end{eqnarray}
+Similarly, by eq.(\ref{decreasingMultiDegree}), we have\footnote{See eq.(\ref{keyUpperBound}).}
+\begin{eqnarray}
+\label{keyContradiction}
+\delta_0 > MD \left( x^{\delta_0 - \gamma_{j,k}} S(g_j, g_k) \right) \geq MD( b_{i,j,k} g_i)
+\end{eqnarray}
+for all possible combinations.
+
+Finally, eq.(\ref{semiFinalResult}) becomes
+\begin{eqnarray}
+\nonumber
+\sum_{m(i) = \delta_0} LT(h_i) g_i &=& \sum_{j,k}c_{j,k} x^{\delta_0 - \gamma_{j,k}} S(g_j, g_k) \\
+\nonumber
+&=& \sum_{j,k} \sum_{i} c_{j,k} b_{i,j,k} g_i \\
+&=& \sum_{i} \left( \sum_{j,k} b_{i,j,k} c_{j,k} \right) g_i \\
+\label{tildeH}
+&=& \sum_{i} \tilde{h}_i g_i 
+\end{eqnarray}
+and eq.(\ref{keyContradiction}) implies
+\begin{eqnarray}
+\label{keyResult}
+MD(\tilde{h}_i g_i) < \delta_0, \forall i.
+\end{eqnarray}
+
+Now, by eq.(\ref{tildeH}),
+\begin{eqnarray}
+\nonumber
+f &=& \sum_{m(i) = \delta_0} LT(h_i) g_i + \sum_{m(i) = \delta_0} \left(h_i - LT(h_i) \right) g_i + \sum_{m(i) < \delta_0} h_i g_i \\
+&=& \sum_{i} \tilde{h}_i g_i  + \sum_{m(i) = \delta_0} \left(h_i - LT(h_i) \right) g_i + \sum_{m(i) < \delta_0} h_i g_i.
+\end{eqnarray}
+We have shown that if we suppose $MD(f) < \delta_0$, then we get eq.(\ref{keyResult}), and this shows all three sums have strictly smaller multi degrees than $\delta_0$.
+This, however, contradicts the minimal assumption of $\delta_0$, therefore we have\footnote{Actually, we show $MD(f) \nless \delta_0$, but we already have eq.(\ref{MDfleqDelta}), thus we get this equality.}
+\begin{eqnarray}
+\label{equality}
+MD(f) = \delta_0.
+\end{eqnarray}
+
+\paragraph{$LT(f)$ is divisible by $\left.LT(g_j)\right|_j$}
+Since we have shown $MD(f) = \delta_0$ (eq.(\ref{equality})), then
+\begin{eqnarray}
+MD(f) = \delta_0 = \left. \max\left(MD(h_i g_i) \right) \right|_i \geq MD(g_j), \forall j.
+\end{eqnarray}
+This tells us that the leading term of $f$ is divisible by any generators
+\begin{eqnarray}
+LT(f) = LC(f) * x^{\delta_0} \sqsupseteq LT(g_j), \forall j.
+\end{eqnarray}
+and this is equivalent to
+\begin{eqnarray}
+LT(f) \in \left< LT(g_1), \cdots, LT(g_t) \right>.
+\end{eqnarray}
+Therefore, $G$ is gr\"obner.\\
+$\blacksquare$
+
+\subsection{Ideal membership condition, with S-polynomials}
+\label{isGroebner2}
+With this Buchberger's Criterion, we can show the the divisibility is the property of Gr\"obner basis as we stated in \S\ref{IMC}; if $G$ is a basis for $I$ with $\forall f \in I$,
+\begin{eqnarray}
+f \stackrel{G}{\to} 0,
+\end{eqnarray}
+then $G$ is gr\"obner.
+
+\subsubsection{Proof}
+Let $G = \{g_1, \cdots, g_t\}$, then it suffices to show $S(g_j, g_k) \stackrel{G}{\to} 0$.
+By \S\ref{SofIisInI}
+\begin{eqnarray}
+S(g_j, g_k) = \frac{x^\gamma}{LT(g_j)}g_k - \frac{x^\gamma}{LT(g_k)}g_k \in I
+\end{eqnarray}
+where $\gamma = LCM \left( LM(g_j), LM(g_k)\right)$, and by our assumption,
+\begin{eqnarray}
+S(g_j, g_k) \stackrel{G}{\to} 0.
+\end{eqnarray}
+This is iff condition for gr\"obner $G$.\\
+$\blacksquare$
+
+\subsection{Several "isGr\"obner"'s}
+\label{severalIsGroebner}
+We have several conditions for gr\"obner property of $G = \{g_1, \cdots, g_t\}$ in a polynomial ideal $I$.
+By definition, eq.(\ref{isGroebner}); if $G$ satisfies
+\begin{eqnarray}
+\nonumber
+\left< LT(g_1), \cdots, LT(g_t) \right> \supset \left< LT(I) \right>,
+\end{eqnarray}
+then we call this $G$ gr\"obner.\footnote{As we saw, this inclusion provides
+\begin{eqnarray}
+\nonumber
+\left< LT(g_1), \cdots, LT(g_t) \right> = \left< LT(I) \right>.
+\end{eqnarray}
+}
+From Buchberger's Criterion \S\ref{Buchberger'sCriterion}:
+\begin{eqnarray}
+\nonumber
+\text{$G$ is gr\"obner}\Leftrightarrow S(g_j, g_k) \stackrel{G}{\to} 0.
+\end{eqnarray}
+From \S\ref{IMC} and \S\ref{isGroebner2},
+\begin{eqnarray}
+\text{$G$ is gr\"obner}\Leftrightarrow \forall f \in I, f \stackrel{G}{\to} 0.
+\end{eqnarray}
+
+In addition, from \S\ref{UniqueReminderProperties}, $\forall f \in \mathbb{K}[x_1, \cdots, x_n]$, we have proved the sufficient condition\footnote{From our source book,
+\begin{quote}
+In fact, Groebner bases can be characterized by the uniqueness of the remainder -- see Theorem 5.35 of BECKER and WEISPFENNING(1993) for this and other conditions equivalent to being a Groebner basis.
+\end{quote}
+}
+\begin{eqnarray}
+\nonumber
+\text{$G$ is gr\"obner}\Rightarrow \exists! r \in \mathbb{K}[x_1, \cdots, x_n] \text{ s.t. } f \stackrel{G}{\to} r.
+\end{eqnarray}
+
+\subsection{Unique remainder among different Gr\"obner bases}
+%We can slightly generalize the statement in \S\ref{UniqueReminderProperties}.
+%
+%Fix a monomial ordering and let $I \subset \mathbb{K}[x_1, \cdots, x_n]$.
+%\begin{enumerate}
+%\item $\forall f \in I$ can be written in the form $f = g + r$, where $g \in I$ and no term of $r \in \mathbb{K}[x_1, \cdots, x_n]$ is divisible by any element of $LT(I)$.
+%
+%\item Given two expression $g + r = f = g' + r'$ satisfy above property.
+%Then $r = r'$, i.e. $r$ is uniquely determined.
+%
+%\end{enumerate}
+Let us fix a monomial order $<$.
+Consider $\forall f \in I$ and two Gr\"obner bases $G, G'$ for $I$, then the remainders of $f$ by $G$ and that of $G'$ are the same.
+
+\subsubsection{Proof}
+From \S\ref{UniqueReminderProperties}, there exists $g, g' \in I$ s.t.
+\begin{eqnarray}
+g + r = f = g' + r',
+\end{eqnarray}
+where 
+\begin{eqnarray}
+f \stackrel{G}{\to} r, f \stackrel{G'}{\to} r',
+\end{eqnarray}
+and $r,r'$ satisfy eq.(\ref{remainderHasSmallerMultiDegree}), i.e., $r \sqsubset \left. LT(g_j) \right|_j$.
+Let us suppose $r' - r \neq 0$.
+Since the differences are in $I$
+\begin{eqnarray}
+g - g' = r' - r \in I,
+\end{eqnarray}
+their normal forms become 0 by \S\ref{isGroebner2}.
+This contradicts the condition for the remainder (eq.(\ref{remainderHasSmallerMultiDegree})), they are not divisible by any leading terms of generators.
+Therefore we have 
+\begin{eqnarray}
+r = r'.
+\end{eqnarray}
+$\blacksquare$
+
+\section{Buchberger's Algorithm}
+\S\ref{Buchberger'sCriterion} gives us the function of the following type
+\begin{eqnarray}
+\verb|Basis -> Bool|
+\end{eqnarray}
+So, we will find a constructive algorithm of Gr\"obner basis:
+\begin{eqnarray}
+\verb|Basis -> GroebnerBasis|
+\end{eqnarray}
+
+\subsection{Buchberger's Algorithm}
+Let $I = \left< f_1, \cdots, f_s \right> \neq \{0\}$ be a polynomial ideal.
+Then a Gr\"obner basis for $I$ can be constructed in a finite steps by the following algorithm:
+
+\subsubsection{Pseudo code}
+\begin{verbatim}
+Input:  F = (f_1, .., f_s)
+Output: G = (g_1, .., g_t)
+
+G := F
+REPEAT
+  G' := G
+  
+  FOR each pair (p,q), p \= q in G' DO
+    S(p,q) -> s
+    IF s \= 0 THEN G := G \cup {s}
+UNTIL G == G'
+\end{verbatim}
+
+That is, for arbitrary generator of an ideal $I = \left< f_1, \cdots, f_s \right>$, the out put is a Gr\"obner basis for $I$.
+
+\subsubsection{Proof}
+Let us define, for a generating set $G = \{g_1, \cdots, g_t\}$,
+\begin{eqnarray}
+\left< G \right> &:=& \left< g_1, \cdots, g_t \right> \\
+\left<LT(G) \right> &:=& \left< LT(g_1), \cdots, LT(g_t) \right>
+\end{eqnarray}
+for later uses.
+Using this notation, the generator $G$ is a Gr\"obner basis for $I$ iff $\left<LT(I)\right> = \left<LT(G) \right>$.
+
+At every stage of the algorithm, we shall show $G' \subset I$, where 
+\begin{eqnarray}
+I = \left< f_1, \cdots, f_s \right>.
+\end{eqnarray}
+This is true at the first step:
+\begin{eqnarray}
+G \subset I.
+\end{eqnarray}
+In some intermediate step, assume $G' \subset I$.
+Since $\forall p,q \in G'$,
+\begin{eqnarray}
+S(p,q) \in G'
+\end{eqnarray}
+we get
+\begin{eqnarray}
+S(p,q) \stackrel{G'}{\to} s \in G'
+\end{eqnarray}
+since $S(p,q) \stackrel{G'}{\to} s$ is equal to
+\begin{eqnarray}
+\exists g' \in G' \text{ s.t. } S(p,q) = g' + s,
+\end{eqnarray}
+therefore
+\begin{eqnarray}
+s = S(p,q) -g' \in G'.
+\end{eqnarray}
+If $s = 0$, then the next $G'$ is unchanged $G' \mapsto G'$, else $(s \neq 0)$, let us add $s$ into $G'$:
+\begin{eqnarray}
+G' \mapsto G' \cup \{ s \} \subset I.
+\end{eqnarray}
+
+When this algorithm terminates, we'll get $G=G'$.
+This holds when
+\begin{eqnarray}
+\forall p, q \in G', S(p,q) \stackrel{G'}{\to} 0,
+\end{eqnarray}
+i.e., $G'$ is gr\"obner (see \S\ref{Buchberger'sCriterion}).
+
+Finally, we claim that the algorithm terminates finitely.
+After one step of main loop, if $G' \neq G$ then 
+\begin{eqnarray}
+G' \mapsto G'' := G' \cup \{s \}.
+\end{eqnarray}
+Since the reminder $s$ is strictly smaller than any generators of $G'$ $s \sqsubset LT(g'_i), g'_i \in G'$ (see eq.(\ref{remainderHasSmallerMultiDegree})),
+\begin{eqnarray}
+LT(s) \notin LT(G')
+\end{eqnarray}
+but by definition
+\begin{eqnarray}
+LT(s) \in LT(G'').
+\end{eqnarray}
+So
+\begin{eqnarray}
+\left<LT(G') \right> \subsetneq \left<LT(G'') \right>.
+\end{eqnarray}
+The ACC in \S\ref{ACC} implies that after a finite number of iterations, this chain will stabilize in finite steps, so that
+\begin{eqnarray}
+\left<LT(G) \right> \subset \cdots \subset \left<LT(G^{(m)}) \right> = \left<LT(G^{(m+1)}) \right>
+\end{eqnarray}
+happen eventually.
+This occur when we meet $G^{(m+1)} = G^{(m)}$, therefore this algorithm will terminate finitely.\\
+$\blacksquare$
+
+\subsection{An elimination method}
+Let $G$ be a Gr\"obner basis for the polynomial ideal $I$.
+$\forall p \in G$ s.t. 
+\begin{eqnarray}
+LT(p) \in \left< LT(G - \{p\}) \right>,
+\end{eqnarray}
+then the set $G - \{p\}$ is also a Gr\"obner basis.
+
+\subsubsection{Proof}
+By definition, this Gr\"obner basis $G$ satisfies
+\begin{eqnarray}
+\left<LT(I)\right> = \left<LT(G) \right>.
+\end{eqnarray}
+We can write
+\begin{eqnarray}
+G &:=& \{g_1, \cdots, g_t, p\} \\
+G - \{p\} &:=& \{g_1, \cdots, g_t\}
+\end{eqnarray}
+
+If $q \in \left< LT(G - \{p\}) \right>$, then we have $q \in \left< LT(G) \right>$ automatically, and
+\begin{eqnarray}
+\left< LT(G - \{p\}) \right> \subset \left<LT(G) \right>.
+\end{eqnarray}
+Conversely, if $LT(p) \in \left< LT(G - \{p\}) \right>$, $\forall q \in \left<LT(G) \right>$ we have an expression
+\begin{eqnarray}
+q = \sum_i h_i * LT(g_i) + h * LT(p), 
+\end{eqnarray}
+where $h,h_i \in \mathbb{K}[x_1, \cdots, x_n]$.
+But since $LT(p) \in \left< LT(G - \{p\}) \right>$, we can decompose $LT(p)$ in $G - \{p\}$ and
+\begin{eqnarray}
+q = \sum_i h'_i * LT(g_i),
+\end{eqnarray}
+and this implies $q \in \left< LT(G - \{p\}) \right>$:
+\begin{eqnarray}
+\left< LT(G - \{p\}) \right> \supset \left<LT(G) \right>
+\end{eqnarray}
+
+Therefore, we have
+\begin{eqnarray}
+\left< LT(G - \{p\}) \right> = \left<LT(G) \right>
+\end{eqnarray}
+and
+\begin{eqnarray}
+\left<LT(I)\right> = \left< LT(G - \{p\}) \right>.
+\end{eqnarray}
+$\blacksquare$
+
+\subsection{Definition of minimal Gr\"obner bases}
+A minimal Gr\"obner basis for a polynomial ideal $I$ is a Gr\"obner basis $G$ for $I$ s.t. the leading coefficients are normalized; $\forall p \in G$,
+\begin{eqnarray}
+LC(p) = 1 
+\end{eqnarray}
+and
+\begin{eqnarray}
+\label{minimalCondition}
+LT(p) \notin \left< LT(G - \{p\}) \right>.
+\end{eqnarray}
+
+By adjusting the leading coefficients 1 and removing $LT(p) \in \left< LT(G - \{p\}) \right>$ from an arbitrary Gr\"obner basis, we will arrive at this minimal Gr\"obner basis.
+
+\subsection{Definition of reduced Gr\"obner bases}
+A reduced Gr\"obner basis for a polynomial ideal $I$ is a Gr\"obner basis $G$ for $I$ s.t. $\forall p \in G$,
+\begin{eqnarray}
+LC(p) = 1
+\end{eqnarray}
+and
+\begin{eqnarray}
+\text{no monomial of $p$ lies in} \left< LT(G - \{p\}) \right>.
+\end{eqnarray}
+
+In general, $g \in G$ is reduced for a Gr\"obner basis $G$ iff no monomial of $g$ is in $\left< LT(G - \{g\}) \right>$.
+
+\subsection{A unique reduced Gr\"obner basis}
+\label{theUniquenessOfReducedGB}
+In general, reduced Gr\"obner bases have the following nice property.
+
+Let $I \neq \{0 \}$ be a polynomial ideal.
+Then, for a given monomial order, $I$ has a unique reduced Gr\"obner basis.
+
+\subsubsection{Proof}
+Let $G$ be a minimal Gr\"obner basis for $I$.
+Our goal is to modify $G$ until all of elements are reduced.
+
+If $g \in G$ is reduced for $G$, then $g$ is also reduced for any other minimal Gr\"obner basis $G'$ of $I$ that contains $g$ and has the same set of leading terms, 
+\begin{eqnarray}
+LT(G) = LT(G'),
+\end{eqnarray}
+since the process of reducing only sees the leading terms $\left< LT(G - \{g\}) \right>$.
+
+Next, given $g \in G$, let $g'$ be the remainder by $G - \{g\}$
+\begin{eqnarray}
+g \stackrel{G - \{g\}}{\to} g'
+\end{eqnarray}
+and let
+\begin{eqnarray}
+G' := (G-\{g\}) \cup \{g'\}
+\end{eqnarray}
+be a new set.\footnote{This new set can be seen as the same $G$ with $g'$ replaced by $g$.}
+We claim that this new $G'$ is also a minimal Gr\"obner basis for $I$.
+
+First,
+\begin{eqnarray}
+LT(g') = LT(g)
+\end{eqnarray}
+since when we divide $g$ by $G-\{g\}$, $LT(g)$ goes to the remainder because $LT(g)$ is not divisible by any element of $\left< LT(G - \{g\}) \right>$.\footnote{We have assumed $G$ is a minimal Gr\"obner basis for $I$, so $LT(g) \notin \left< LT(G - \{g\}) \right> $ eq.(\ref{minimalCondition}).}
+This shows that the generators and the monomial ideals are the same:
+\begin{eqnarray}
+LT(G) &=& LT(G') \\
+\left< LT(G) \right> &=& \left< LT(G') \right>.
+\end{eqnarray}
+Since $G$ is a Gr\"obner basis for $I$, $G$ satisfies $\left<LT(I)\right> = \left<LT(G) \right>$ and so
+\begin{eqnarray}
+\left<LT(I)\right> = \left<LT(G') \right>,
+\end{eqnarray}
+i.e., $G'$ is also a Gr\"obner basis, and is minimum.
+Note that $g' \in G'$ is reduced for $G'$ by construction.
+ 
+Now, reduce all the element in $G$ by using above process until they are all reduced.
+Since once an element is reduced, it stays reduced even if $G$ changes due to other reducing processes.
+Thus, we end up with a reduced Gr\"obner basis.
+
+Finally, we'll prove the uniqueness.
+Suppose $G, \tilde{G}$ be reduced Gr\"obner bases for $I$.
+Under reducing process $G \mapsto G' := (G-\{g\}) \cup \{g' \}$, the leading terms of generators are unchanged:
+\begin{eqnarray}
+LT(G) = LT(\tilde{G}),
+\end{eqnarray}
+i.e. $\forall g \in G$, 
+\begin{eqnarray}
+\exists \tilde{g} \in \tilde{G} \text{ s.t. } LT(g) = LT(\tilde{g}).
+\end{eqnarray}
+Consider the difference $g - \tilde{g}$.
+Since this is in $I$,
+\begin{eqnarray}
+g -\tilde{g} \stackrel{G}{\to} 0.
+\end{eqnarray}
+But we also know $LT(g) = LT(\tilde{g})$, the leading terms cancel in the difference.
+Since $G,\tilde{G}$ are reduced, we have
+\begin{eqnarray}
+g -\tilde{g} \stackrel{G}{\to} g -\tilde{g}
+\end{eqnarray}
+but this is $0$.
+Thus we get $g = g'$ and 
+\begin{eqnarray}
+G = \tilde{G},
+\end{eqnarray}
+since we have shown that $\forall g \in G, \exists! g \in \tilde{G}$.\\
+$\blacksquare$
+
+
+
+
+
+
+
+
+
+
+\subsubsection{Note}
+A consequence of the uniqueness of the reduced Gr\"obner basis in \S\ref{theUniquenessOfReducedGB} is we have an ideal equality algorithm.
+
+Consider two sets of generators
+\begin{eqnarray}
+\{f_1, \cdots, f_s\}, \{g_1, \cdots, g_t\}
+\end{eqnarray}
+and the ideals which are generated by $f$'s and $g$'s.
+Compute the reduced Gr\"obner bases for $f$'s and $g$'s.
+Then the ideals are equal iff the Gr\"obner bases are the same.\footnote{These Gr\"obner bases are merely sets, so we can compare them simply element by element.}
+
+%\section{First Applications of Gr\"obner bases}
+%\subsection{? Ideal Membership Problem}
+%From  \ref{isGroebner2}, given ideal $I$ and its Gr\"obner basis $G$,
+%\begin{eqnarray}
+%f \in I \Leftrightarrow f \stackrel{G}{\to} 0.
+%\end{eqnarray}
+%
+%\subsection{? The Problem of Solving Polynomial Equations}
+%\subsection{? The Implicitization Problem}
+
+\section{Improvements on Buchberger's Algorithm}
+The most heaviest part of computation in Buchberger's Algorithm is the polynomial divisions.
+Hence, a good way to improve the efficiency of the algorithm would be to reduce the number of S-polynomials need to be considered.
+
+\subsection{Definition of $\to_G$}
+Fix a monomial order and let $G = \{g_1, \cdots, g_s\} \subset \mathbb{K}[x_1, \cdots, x_n]$.
+Given $f \in \mathbb{K}[x_1, \cdots, x_n]$, we say that $f$ reduces to zero modulo $G$,\footnote{This is different from $\stackrel{G}{\to}$ of division algorithm in \S\ref{normalForms}.}
+\begin{eqnarray}
+f \to_G 0,
+\end{eqnarray}
+if $f$ can be written in the form,
+\begin{eqnarray}
+f = \sum_{i=1}^t a_i g_i
+\end{eqnarray}
+s.t., whenever $a_i g_i \neq 0$, we have
+\begin{eqnarray}
+MD(f) \geq MD(a_i g_i).
+\end{eqnarray}
+
+\subsection{$f \stackrel{G}{\to} 0$(division) $\Rightarrow f \to_G 0$(reduction to 0 modulo $G$)}
+\label{ModuloR0}
+Let $G = (g_1, \cdots, g_s)$ be an ordered tuple of elements in $\mathbb{K}[x_1, \cdots, x_n]$.
+Then $f \stackrel{G}{\to} 0$ implies $f \to_G 0$, though the converse is false in general.
+
+\subsubsection{Proof}
+Here we will do essentially the same discussion in \S\ref{membership}.
+If $f \stackrel{G}{\to} 0$, by definition
+\begin{eqnarray}
+f = \sum_{i=1}^t a_i g_i + 0,
+\end{eqnarray}
+and for $a_i g_i \neq 0$, they satisfy eq.(\ref{decreasingMultiDegree}),
+\begin{eqnarray}
+MD(f) \geq MD(a_i g_i).
+\end{eqnarray}
+This shows that $f \to_G 0$.
+
+The counterexample for $\Leftarrow$ direction is in \S\ref{membership}.\footnote{If $G$ is gr\"obner, both $\stackrel{G}{\to}$ and $\to_G$ are equivalent, see \S\ref{IMC}.}
+\\
+$\blacksquare$
+
+\subsection{Gr\"obner basis criterion, a more general version}
+\label{efficientGCriterion}
+A basis $G = \{g_1, \cdots, g_s\}$ for an ideal $I \subset \mathbb{K}[x_1, \cdots, x_n]$ is a Gr\"obner basis iff $\forall i \neq j, S(g_i, g_j) \to_G 0$.
+
+\subsubsection{Proof}
+In the proof of \S\ref{Buchberger'sCriterion}, what we have used are the expressions
+\begin{eqnarray}
+S(g_j, g_k) = \sum_{i} a_{i,j,k} g_i
+\end{eqnarray}
+with the conditions eq.(\ref{MDSgeqAG})
+\begin{eqnarray}
+MD\left(S(g_j, g_k) \right) \geq MD( a_{i,j,k} g_i)
+\end{eqnarray}
+for nonzero $a_{i,j,k}$.
+This is the same as $S(g_i, g_j) \to_G 0$ in \S\ref{ModuloR0}, and
+\begin{eqnarray}
+G \text{ is gr\"obenr} \Leftrightarrow S(g_i, g_j) \to_G 0.
+\end{eqnarray}
+$\blacksquare$
+
+\subsection{Proposition}
+Given a finite set $G \subset \mathbb{K}[x_1, \cdots, x_n]$, suppose that we have $f,g \in G$ s.t.
+\begin{eqnarray}
+\label{relativelyPrime}
+LCM( LM(f), LM(g)) = LM(f) * LM(g).
+\end{eqnarray}
+This means that the leading monomials of $f$ and $g$ are relatively prime.
+Then $S(f,g) \to_G 0$.
+
+If this condition eq.(\ref{relativelyPrime}) holds, then this S-polynomial is guaranteed to reduce to zero, so we don't need to polynomial division on this particular $S(f,g)$.
+
+\subsubsection{Proof}
+For simplicity, we can assume $LC(f) = 1 = LC(g)$, i.e. $LT(f) = LM(f), LT(g) = LM(g)$ and
+\begin{eqnarray}
+f &=& LM(f) + p \\
+g &=& LM(g) + q
+\end{eqnarray}
+Clearly,
+\begin{eqnarray}
+\label{strictSmallnessConditions1}
+MD\left( LM(f) \right) &>& MD(p) \\
+\label{strictSmallnessConditions2}
+MD\left( LM(g) \right) &>& MD(q).
+\end{eqnarray}
+
+By definition of S-polynomial,
+\begin{eqnarray}
+S(f,g) = \frac{x^\gamma}{LT(f)} f - \frac{x^\gamma}{LT(g)} g ,
+\end{eqnarray}
+where $x^\gamma = LCM( LM(f), LM(g))$ satisfies eq.(\ref{relativelyPrime}) and then
+\begin{eqnarray}
+S(f,g) &=& \frac{LM(f) * LM(g)}{LT(f)} f - \frac{LM(f) * LM(g)}{LT(g)} g \\
+&=& LM(g) f - LM(f) g \\
+&=& (g-q)f - (f-p)g \\
+&=& pg - qf.
+\end{eqnarray}
+Since $f,g \in G$, we have
+\begin{eqnarray}
+S(f,g) \to_G 0.
+\end{eqnarray}
+
+If the leading terms in $pg$ and $gf$ are the same, then
+\begin{eqnarray}
+LM(p)LM(g) = LM(q)LM(f).
+\end{eqnarray}
+Since we have assumed eq.(\ref{relativelyPrime}), this means
+\begin{eqnarray}
+\exists h (\neq 0) \in \mathbb{K}[x_1, \cdots, x_n] \text{ s.t. } LM(p) = h*LM(f), LM(q) = h* LM(g).  \qquad
+\end{eqnarray}
+It contradicts eq.(\ref{strictSmallnessConditions1}) and eq.(\ref{strictSmallnessConditions2}).
+Thus the leading terms in the last expression for $S(f,g)$ cannot cancel:
+\begin{eqnarray}
+MD\left(S(f,g) \right) = \max\left( MD(pg), MD(qf) \right).
+\end{eqnarray}
+$\blacksquare$
+
+\subsubsection{Note}
+This proof gives us a more efficient version of \S\ref{efficientGCriterion}; to test for a Gr\"obner basis, we need only have
+\begin{eqnarray}
+\forall i<j, S(g_i, g_j) \to_G 0,
+\end{eqnarray}
+where $LM(g_i),LM(g_j)$ are not relatively prime, see eq.(\ref{relativelyPrime}).
+
+Here is another way to improve, a kind of generalization of S-polynomials.
+
+\subsection{Definition of syzygies}
+Let $F = (f_1, \cdots, f_s)$ be a tuple of polynomials.
+A syzygy\footnote{
+From our source book;
+\begin{quotation}
+This word is used in astronomy to indicate an alignment of three planets or other heavenly bodies.
+The root is a Greek word meaning "yoke."
+In an astronomical syzygy, planets are "yoked together"; in a mathematical syzygy, it is polynomials that are "yoked."
+\end{quotation}
+} on the leading terms $LG(f_1), \cdots, LT(f_s)$ of $F$ is an s-tuple of polynomials
+\begin{eqnarray}
+(h_1, \cdots, h_s) \in (\mathbb{K}[x_1, \cdots, x_n])^s
+\end{eqnarray}
+s.t.,
+\begin{eqnarray}
+\sum_{i=1}^s h_i * LT(f_i) = 0.
+\end{eqnarray}
+We let $S(F)$ be the subset of $(\mathbb{K}[x_1, \cdots, x_n])^s$ consisting of all syzygies on the leading terms of $F$.
+
+Let
+\begin{eqnarray}
+e_i = (0, \cdots, 0,\underbrace{1}_{\text{i-th}},0, \cdots, 0) \in (\mathbb{K}[x_1, \cdots, x_n])^s
+\end{eqnarray}
+be a unit tuple, then a syzygy $S \in S(F)$ can be written as
+\begin{eqnarray}
+S = \sum_{i=1}^s h_i e_i.
+\end{eqnarray}
+Given a pair, $i<j$,
+\begin{eqnarray}
+(f_i, f_j) \subset F,
+\end{eqnarray}
+then 
+\begin{eqnarray}
+S_{ij} =  \frac{x^\gamma}{LT(f_i)} e_i - \frac{x^\gamma}{LT(f_j)} e_j
+\end{eqnarray}
+gives a syzygy on the leading terms of $F$, where $x^\gamma$ is the least common multiple of $LT(f_i), LT(f_j)$.
+In fact, the name S-polynomial is actually an abbreviation for "syzygy polynomial."
+
+\subsection{Definition of homogeneous of multidegree}
+An element $S \in S(F)$ is homogeneous of multidegree $\alpha$, where $\alpha \in \mathbb{N}^n$, provided that
+\begin{eqnarray}
+S = (c_1x^{\alpha(1)}, \cdots, c_sx^{\alpha(s)}),
+\end{eqnarray}
+where $c_i \in \mathbb{K}$ and $\alpha(i) + MD(f_i) = \alpha$, whenever $c_i \neq 0$.
+
+\subsection{? Lemma}
+Every element of $S(F)$ can be written uniquely as a sum of homogeneous elements of $S(F)$.
+That is, $S(F)$ has a finite basis.
+
+\subsubsection{Proof}
+Let $S = (h_1, \cdots, h_s) \in S(F)$, i.e. $F = (f_1, \cdots, f_s)$ with
+\begin{eqnarray}
+\sum_{i=1}^s h_i * LT(f_i) = 0.
+\end{eqnarray}
+
+
+\subsection{? Proposition}
+Given $F = (f_1, \cdots, f_s)$, every syzygy $S \in S(F)$ can be written as
+\begin{eqnarray}
+S = \sum_{i<j} u_{ij} S_{ij},
+\end{eqnarray}
+where $u_{ij} \in \mathbb{K}[x_1, \cdots, x_n]$ and the syzygy $S_{ij}$ is defined in eq.(?)
+
+\subsection{? Theorem}
+A basis $G = (g_1, \cdots, g_t)$ for an ideal $I$ is a Gr\"obner basis iff for every element $S = (h_1, \cdots, h_t)$ in a homogeneous basis for the syzygies $S(G)$, we have
+\begin{eqnarray}
+S \cdot G = \sum_{i = 1}^t h_i g_i \to_G 0.
+\end{eqnarray}
+
+\subsection{? Proposition} 
+Give $G = (g_1, \cdots, g_t)$, suppose that $S \subset \{S_{ij} | 1 \leq i < j \leq t\}$ is a basis of $S(G)$.
+In addition, suppose we have distinct elements $g_i, g_j, g_k \in G$ s.t.
+\begin{eqnarray}
+LT(g_k) \text{ divides } LCM( LT(g_i), LT(g_j))
+\end{eqnarray}
+IF $S_{ij}, S_{jk} \in \mathcal{S}$, then $\mathcal{S} -\{ S_{ij} \}$ is also a basis of $S(G)$.
+(Note: If $i > j$, we set $S_{ij} = S_{ji}$.)
+
+\subsection{? Theorem}
+Let $I = \left< f_1, \cdots, f_s \right>$ be a polynomial ideal.
+Then a Gr\"obner basis for $I$ can be constructed in a finite number of steps by the following algorithm: $\cdots$
+
+\section{A side story on ACC}
+We have used Hilbert Basis Theorem in the proof of ACC \S\ref{ACC}, but ACC is independent from Hilbert Basis Theorem.
+First of all, we should give more precise definitions.
+
+\subsection{Chains, and ascending chains}
+Let $(S, \leq)$ be a non-empty partially ordered set.
+The subset $C \subset S$ is called a chain iff $C$ is totally ordered, i.e.,
+\begin{eqnarray}
+\forall c,c' \in C, \text{ either } c \leq c' \text{ or } c' \leq c.
+\end{eqnarray}
+
+The chain $C$ is an ascending chain iff the elements of $C$ are $\mathbb{N}$ indexed s.t.,
+\begin{eqnarray}
+\forall k \in \mathbb{N}, c_k \leq c_{k+1}, \lnot (\exists d \in C \text{ s.t. } c_k < d < c_{k+1}),
+\end{eqnarray}
+where $<$ is equivalent to ($\leq$ and $\neq$, i.e., $\lneq$).\footnote{Descending chains are defined similarly.}
+
+\subsection{Two equivalent conditions for ACC}
+\label{MoreACC}
+Let $(S, \leq)$ be a non-empty partially ordered set.
+Then the following conditions are equivalent.
+\begin{enumerate}
+\item (maximal) $\forall T \subset S$ of a partially ordered subset,
+\begin{eqnarray}
+\exists m \in T \text{ s.t. } \lnot( \exists n \in T \text{ s.t. } m \leq n).
+\end{eqnarray}
+
+\item (strict upper bound)\footnote{The upper bound is in $S$, in general.} $\forall C \subset S$ of a chain,
+\begin{eqnarray}
+\exists u \in C \text{ s.t. } \forall c \in C, c \leq u.
+\end{eqnarray}
+ 
+\item (ACC) $\forall C \subset S$ of an ascending chain, with $\left. c_k \right|_{k \in \mathbb{N}} \in C$, then
+\begin{eqnarray}
+\exists n \in \mathbb{N} \text{ s.t. } c_{n+1} = c_{n}.
+\end{eqnarray}
+That is, every ascending chain will terminate finitely:
+\begin{eqnarray}
+C = \{c_0 \leq c_1 \leq \cdots \leq c_n\}
+\end{eqnarray}
+
+\end{enumerate}
+
+\subsubsection{Proof}
+We prove $1. \Rightarrow 2. \Rightarrow 3. \Rightarrow 1.$
+ 
+(maximal) $\Rightarrow $ (strict upper bound)
+Take
+\begin{eqnarray}
+u := \max (C).
+\end{eqnarray}
+
+(strict upper bound) $\Rightarrow$ (ACC)
+For
+\begin{eqnarray}
+u := \text{upper bound}(C)
+\end{eqnarray}
+there should be $n \in \mathbb{N}$ s.t.
+\begin{eqnarray}
+u = c_n.
+\end{eqnarray}
+
+(ACC) $\Rightarrow$ (maximal)
+Consider $\forall T (\neq \emptyset) \subset S$.
+Suppose $T$ has NO maximal element, then take an element $t_0 \in T$.
+We can take
+\begin{eqnarray}
+t_1 \in (T - \{t_0\}) \text{ s.t. } t_0 < t_1,
+\end{eqnarray}
+since $t_0$ is not maximal.
+Inductively, we can take a subset
+\begin{eqnarray}
+\{t_0 < t_1 < \cdots \} \subset T,
+\end{eqnarray}
+by Axiom of Choice.\footnote{
+More rigorously, for non empty sets
+\begin{eqnarray}
+T_0 := T, T_1 := T_0 - \{t_0\}, \cdots, T_n := T_{n-1}-\{t_{n-1}\}
+\end{eqnarray}
+there exists a choice function
+\begin{eqnarray}
+t: \mathbb{N} \to \bigcup_{n \in \mathbb{N}} T_i = T; n \mapsto t_n \in T_n.
+\end{eqnarray}
+
+}
+However, this is an infinite (strictly) ascending chain, and contradicts ACC.
+Thus $T$ has a maximal element.\\
+$\blacksquare$
+
+
+\chapter{Elimination Theory}
+
+the Geometric Extension Theorem for (weak) Nullstellensatz
+
+\section{The Elimination and Extension Theorems}
+\setcounter{subsection}{-1}
+\subsection{Example}
+Here is the list of equations that we will solve:
+\begin{eqnarray}
+x^2 + y + z &=& 1 \\
+x + y^2 + z &=& 1 \\
+x + y + z^2 &=& 1
+\end{eqnarray}
+Putting them into Maxima, we get the Gr\"obner basis for the ideal that is generated by above equations.
+\begin{verbatim}
+(%i1) load(grobner)$
+(%i2) display2d:false$
+(%i3) poly_reduced_grobner ([x^2+y+z-1, x+y^2+z-1, x+y+z^2-1],[x,y,z]);
+(%o3) [z^2+y+x-1,(-z^2)+z+y^2-y,z^4+2*y*z^2-z^2,z^6-4*z^4+4*z^3-z^2]
+\end{verbatim}
+where the default settings are
+\begin{verbatim}
+(%i5) poly_monomial_order;
+(%o5) lex
+(%i6) poly_grobner_algorithm;
+(%o6) buchberger
+\end{verbatim}
+
+If we set
+\begin{verbatim}
+(%i14) g: poly_reduced_grobner ([x^2+y+z-1, x+y^2+z-1, x+y+z^2-1],[x,y,z]);
+(%o14) [z^2+y+x-1,(-z^2)+z+y^2-y,z^4+2*y*z^2-z^2,z^6-4*z^4+4*z^3-z^2]
+(%i15) g[4], factor;
+(%o15) (z-1)^2*z^2*(z^2+2*z-1)
+\end{verbatim}
+we can solve the 4th Gr\"obner basis \verb|g[4]| for $z$:
+\begin{verbatim}
+(%i16) solve(%,z);
+(%o16) [z = (-sqrt(2))-1,z = sqrt(2)-1,z = 0,z = 1]
+\end{verbatim}
+Substituting these solution in the rest equations, we'll get the full solutions.
+\begin{verbatim}
+(%i46) g, z=0;
+(%o46) [y+x-1,y^2-y,0,0]
+(%i47) solve(%, [x,y]);
+(%o47) [[x = 1,y = 0],[x = 0,y = 1]]
+
+(%i49) g, z=1;
+(%o49) [y+x,y^2-y,2*y,0]
+(%i50) solve(%, [x,y]);
+(%o50) [[x = 0,y = 0]]
+
+(%i52) g, z = (-sqrt(2))-1;
+(%o52) [y+x+((-1)-sqrt(2))^2-1,y^2-y-sqrt(2)-((-1)-sqrt(2))^2-1,
+        2*((-1)-sqrt(2))^2*y+((-1)-sqrt(2))^4-((-1)-sqrt(2))^2,
+        ((-1)-sqrt(2))^6-4*((-1)-sqrt(2))^4+4*((-1)-sqrt(2))^3
+                        -((-1)-sqrt(2))^2]
+(%i53) solve(%, [x,y]);
+(%o53) [[x = (-sqrt(2))-1,y = (-sqrt(2))-1]]
+
+(%i55) g, z = sqrt(2)-1;
+(%o55) [y+x+(sqrt(2)-1)^2-1,y^2-y+sqrt(2)-(sqrt(2)-1)^2-1,
+        2*(sqrt(2)-1)^2*y+(sqrt(2)-1)^4-(sqrt(2)-1)^2,
+        (sqrt(2)-1)^6-4*(sqrt(2)-1)^4+4*(sqrt(2)-1)^3-(sqrt(2)-1)^2]
+(%i56) solve(%, [x,y]);
+(%o56) [[x = sqrt(2)-1,y = sqrt(2)-1]]
+\end{verbatim}
+Maxima can also solve these equations directly, and it's consistent:
+\begin{verbatim}
+(%i57) solve([x^2+y+z-1, x+y^2+z-1, x+y+z^2-1],[x,y,z]);
+(%o57) [[x = 0,y = 0,z = 1],[x = sqrt(2)-1,y = sqrt(2)-1,z = sqrt(2)-1],
+        [x = (-sqrt(2))-1,y = (-sqrt(2))-1,z = (-sqrt(2))-1],
+        [x = 1,y = 0,z = 0],[x = 0,y = 1,z = 0]]
+\end{verbatim}
+
+Here is the sketch of above process.
+\begin{enumerate}
+\item (Elimination)
+Find a polynomial which involved only one variable, say $z$.
+
+\item (Extension)
+Putting each solution for above eliminated equation(s), extend these solutions of the original equations.
+\end{enumerate}
+
+\subsection{The elimination ideals}
+Given $I = \left< f_1, \cdots, f_s \right> \subset \mathbb{K}[x_1, \cdots, x_n]$, the $l$-th elimination ideal $I_l$ is the ideal defined by
+\begin{eqnarray}
+I_l := I \cap \mathbb{K}[x_{l+1}, \cdots, x_n].
+\end{eqnarray}
+That is $I_l$ is an ideal which generated by $f_1 = \cdots = f_s=0$ expressed in only $x_{l+1}, \cdots, x_n$.
+
+\subsubsection{Check}
+Since $0\in I$ can be seen as a constant polynomial,
+\begin{eqnarray}
+0 \in I_l.
+\end{eqnarray}
+$\forall f,g \in I_l \subset I$,
+\begin{eqnarray}
+f + g \in I
+\end{eqnarray}
+and both $f$ and $g$ are functions only on $x_{l+1}, \cdots, x_n$, so $f+g \in \mathbb{K}[x_{l+1}, \cdots, x_n]$, i.e.,
+\begin{eqnarray}
+f + g \in I_l.
+\end{eqnarray}
+Finally, $\forall f \in I_l \subset I, r \in \mathbb{K}[x_{l+1}, \cdots, x_n]$,
+\begin{eqnarray}
+r * f \in I,
+\end{eqnarray}
+and $r * f \in \mathbb{K}[x_{l+1}, \cdots, x_n]$, that is
+\begin{eqnarray}
+r * f \in I_l.
+\end{eqnarray}
+Therefore, $I_l$ is an ideal of $ \mathbb{K}[x_{l+1}, \cdots, x_n]$.\\
+$\blacksquare$
+
+\subsubsection{Note}
+More generally, the first elimination of $I_l \subset \mathbb{K}[x_{l+1}, \cdots, x_n]$ is $I_{l+1}$, since the first elimination of $I_l$ is given by
+\begin{eqnarray}
+I_l \cap \mathbb{K}[x_{l+2}, \cdots, x_n]
+\end{eqnarray}
+but
+\begin{eqnarray}
+I_{l+1} &:=& I \cap \mathbb{K}[x_{l+2}, \cdots, x_n] \\
+&=& \left( I \cap \mathbb{K}[x_{l+1}, \cdots, x_n] \right) \cap \mathbb{K}[x_{l+2}, \cdots, x_n] \\
+&=& I_l \cap \mathbb{K}[x_{l+2}, \cdots, x_n].
+\end{eqnarray}
+$\blacksquare$
+
+\subsubsection{The Elimination Step}
+Thus a solution of the Elimination Step means giving a systematic procedure for finding elements of $I_l$.
+With the proper term ordering, Gr\"obner bases allow us to do this instantly.
+
+\subsection{The Elimination Theorem}
+Let $I \subset \mathbb{K}[x_1, \cdots, x_n]$ be an ideal and $G$ be a Gr\"obner basis for $I$ with $>_{lex}$, s.t.,
+\begin{eqnarray}
+x_1 > x_2 > \cdots > x_n.
+\end{eqnarray}
+Then $ 0 \leq \forall l \leq n$, the set
+\begin{eqnarray}
+G_l := G \cap \mathbb{K}[x_{l+1}, \cdots, x_n]
+\end{eqnarray}
+is a Gr\"obner basis of the l-th elimination ideal $I_l$.
+
+\subsubsection{Proof}
+It suffices to show $\left< LT(G_l) \right> \supset \left< LT(I_l)\right>$ of eq.(\ref{isGroebner}) "isGr\"obner".
+
+Consider $\forall f \in I_l \subset I$.
+Since $G$ is a Gr\"obner basis for $I$, there is some $g \in G$ whose leading term divides $LT(f)$:
+\begin{eqnarray}
+LT(f) \sqsupseteq LT(g) \Leftrightarrow : LT(f) \in \left< LT(G) \right>.
+\end{eqnarray}
+
+Now we have
+\begin{eqnarray}
+f \in I_l := I \cap \mathbb{K}[x_{l+1}, \cdots, x_n] \Rightarrow f \in \mathbb{K}[x_{l+1}, \cdots, x_n]
+\end{eqnarray}
+and since we are using $>_{lex}$ with
+\begin{eqnarray}
+x_1 > x_2 > \cdots > x_n,
+\end{eqnarray}
+any monomial involving $x_1, \cdots, x_l$ is greater than all monomials in $\mathbb{K}[x_{l+1}, \cdots, x_n]$, say $f$:
+\begin{eqnarray}
+\forall h(x_1, \cdots, x_l) > f(x_{l+1}, \cdots, x_n).
+\end{eqnarray}
+
+Since $LT(f)$ is divisible by $LT(g)$ and from the above observation, we get
+\begin{eqnarray}
+LT(g) \in \mathbb{K}[x_{l+1}, \cdots, x_n]
+\end{eqnarray}
+This implies that
+\begin{eqnarray}
+g \in \mathbb{K}[x_{l+1}, \cdots, x_n],
+\end{eqnarray}
+and
+\begin{eqnarray}
+g \in G \cap \mathbb{K}[x_{l+1}, \cdots, x_n] =: G_l.
+\end{eqnarray}
+Therefore this $g$ is indeed in $G_l$ and
+\begin{eqnarray}
+g \in G_l, LT(f) \sqsupseteq LT(g) \Leftrightarrow LT(f) \in \left< LT(G_l) \right>.
+\end{eqnarray}
+So $\forall f \in I_l$,
+\begin{eqnarray}
+LT(f) \in \left< LT(I_l) \right> \Rightarrow LT(f) \in \left< LT(G_l) \right>.
+\end{eqnarray}
+$\blacksquare$
+
+\subsection{? The Extension Theorem}
+Let $I \subset \mathbb{C}[x_1, \cdots, x_n]$ be an ideal and $I_1$ be the 1st elimination ideal of $I$.
+$1 \leq \forall i \leq s$, write $f_i$ in the form
+\begin{eqnarray}
+f_i = g_i(x_2, \cdots, x_n)x_1^{N_i} + o(x_1^{N_i}),
+\end{eqnarray}
+where $N_i \geq 0$ and $g_i \in \mathbb{C}[x_2, \cdots, x_n]$ is nonzero, and $o(x_1^{N_i})$ stands for the terms in which $x_1$ has degree $< N_i$.
+Suppose that we have a partial solution $(a_2, \cdots, a_n) \in \mathbb{V}(I_1)$.
+If $(a_2, \cdots, a_n) \notin \mathbb{V}(g_1, \cdots, g_s)$, then there exists $a_1 \in \mathbb{C}$ s.t. $(a_1, \cdots, a_n) \in \mathbb{V}(I)$.
+
+\subsubsection{Note}
+The proof of this theorem uses resultant in \S.
+
+This extension theorem is especially easy to use when one of the leading coefficients is constant.
+
+\subsection{? Corollary}
+Let $I = \left< f_1, \cdots, f_s \right> \subset \mathbb{C}[x_1, \cdots, x_n]$, and assume that for some $i$, $f_i$ is the form
+\begin{eqnarray}
+f_i = c x_1^N + o(x_1^N),
+\end{eqnarray}
+where $c \in \mathbb{C}$ is nonzero and $N>0$.
+If $I_1$ is the 1st elimination ideal of $I$ and $(a_2, \cdots, a_n) \in \mathbb{V}(I_1)$, then there is $a_1 \in \mathbb{C}$ s.t. $(a_1, \cdots, a_n) \in \mathbb{V}(I)$.
+
+\subsubsection{Proof}
+This follows from the Extension Theorem; since this $g_i = c \neq 0$ implies
+\begin{eqnarray}
+\mathbb{V}(g_1, \cdots, g_s) = \left\{a \left| g_1(a) = \cdots = g_s(a) = 0\right. \right\}= \emptyset,
+\end{eqnarray}
+the if-statement
+\begin{eqnarray}
+(a_2, \cdots, a_n) \notin \mathbb{V}(g_1, \cdots, g_s)
+\end{eqnarray}
+is True for all partial solutions.\\
+$\blacksquare$
+
+\section{The Geometry of Elimination}
+For simplicity, we will work over $\mathbb{C}$.
+
+\subsection{Projections of an affine variety}
+Suppose we have
+\begin{eqnarray}
+V := \mathbb{V}(f_1, \cdots, f_s) \subset \mathbb{C}^n.
+\end{eqnarray}
+To eliminate the first $l$ variables, consider the projection map
+\begin{eqnarray}
+\pi_l : \mathbb{C}^n \to \mathbb{C}^{n-l}; (a_1, \cdots, a_n) \mapsto (a_{l+1}, \cdots, a_n).
+\end{eqnarray}
+The image of $V \subset \mathbb{C}^n$ is in
+\begin{eqnarray}
+\pi_l(V) \subset \mathbb{C}^{n-l}.
+\end{eqnarray}
+
+\subsection{Lemma}
+\label{pi_lVIsInVI_l}
+Let
+\begin{eqnarray}
+I_l := \left< f_1, \cdots, f_s\right> \cap \mathbb{C}[x_{l+1}, \cdots, x_n]
+\end{eqnarray}
+be the $l$-th elimination ideal.
+Then
+\begin{eqnarray}
+\pi_l(V) \subset \mathbb{V}(I_l) (\subset \mathbb{C}^{n-l})
+\end{eqnarray}
+
+\subsubsection{Proof}
+Let $\forall f \in I_l \subset \left< f_1, \cdots, f_s\right>$ vanishes at $\forall (a_1, \cdots, a_n) \in V := \mathbb{V}(f_1, \cdots, f_s)$,
+\begin{eqnarray}
+f(a_1, \cdots, a_n) = 0.
+\end{eqnarray}
+However, since $f \in I_l := I \cap \mathbb{K}[x_{l+1}, \cdots, x_n]$, $f$ depends only on $x_{l+1}, \cdots, x_n$,
+\begin{eqnarray}
+f(a_{l+1}, \cdots, a_n) = f\circ \pi_l(a_1, \cdots, a_n) = 0.
+\end{eqnarray}
+That is, $f$ vanishes at all points in $\pi_l(V)$.\\
+$\blacksquare$
+
+\subsection{? Geometric Extension Theorem}
+\label{GeometricExtensionTheorem}
+Geometrical interpretation of the Extension Theorem; given $V := \mathbb{V}(f_1, \cdots, f_s) \subset \mathbb{C}^n$, let $g_i \in \mathbb{C}[x_2, \cdots, x_n]$ be as in the Extension Theorem.
+If $I_1$ is the 1st elimination ideal of $\left< f_1, \cdots, f_s\right>$, then we have
+\begin{eqnarray}
+\mathbb{V}(I_1) = \pi_1(V) \cup \left( \mathbb{V}(g_1, \cdots, g_s) \cap \mathbb{V}(I_1) \right) (\subset \mathbb{C}^{n-1}),
+\end{eqnarray}
+where $\pi_1: \mathbb{C}^n \to \mathbb{C}^{n-1}$ is the projection onto the last $n-1$ components.
+
+\subsubsection{Proof}
+Since we have shown that $\pi_1(V) \subset \mathbb{V}(I_1)$, 
+\begin{eqnarray}
+\mathbb{V}(I_1) \supset \pi_1(V) \cup \left( \mathbb{V}(g_1, \cdots, g_s) \cap \mathbb{V}(I_1) \right) 
+\end{eqnarray}
+
+Conversely, consider an arbitrary partial solution in $\mathbb{V}(I_1)$
+\begin{eqnarray}
+(a_2, \cdots, a_n) \in \mathbb{V}(I_1).
+\end{eqnarray}
+From Fig.\ref{vennDiagram1}, this partial solution is either in
+\begin{eqnarray}
+(a_2, \cdots, a_n) \in \mathbb{V}(g_1, \cdots, g_s) \cap \mathbb{V}(I_1)
+\end{eqnarray}
+or in
+\begin{eqnarray}
+(a_2, \cdots, a_n) \notin \mathbb{V}(g_1, \cdots, g_s) \cap \mathbb{V}(I_1).
+\end{eqnarray}
+%%%%%%%%%%%%%%%%%%%%%%%%%%VennDiagram%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[htbp]
+\begin{center}
+
+\def\firstcircle{(90:1.75cm) circle (2.5cm)}
+\def\secondcircle{(210:1.75cm) circle (2.5cm)}
+\def\thirdcircle{(330:1.75cm) circle (2.5cm)}
+
+\begin{tikzpicture}
+\begin{scope}
+    \clip \secondcircle;
+%    \fill[gray] \thirdcircle;
+\end{scope}
+
+\begin{scope}
+    \clip \firstcircle;
+    \fill[gray] \thirdcircle;
+\end{scope}
+
+\draw \firstcircle node[text=black,above] {$V(I_1)$};
+\draw \secondcircle node [text=black,below left] {$\pi_1(V)$};
+\draw \thirdcircle node [text=black,below right] {$V(g)$};
+\end{tikzpicture}
+
+\caption{Three sets of $V(I_1), V(g)$, and $\pi_1(V)$}
+\label{vennDiagram1}
+\end{center}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%VennDiagram%%%%%%%%%%%%%%%%%%%%%%%%%%
+If $(a_2, \cdots, a_n) \in \mathbb{V}(g_1, \cdots, g_s) \cap \mathbb{V}(I_1)$, then clearly
+\begin{eqnarray}
+(a_2, \cdots, a_n) \in \pi_1(V) \cup \left( \mathbb{V}(g_1, \cdots, g_s) \cap \mathbb{V}(I_1) \right).
+\end{eqnarray}
+Else $(a_2, \cdots, a_n) \notin \mathbb{V}(g_1, \cdots, g_s) \cap \mathbb{V}(I_1)$, then we also have
+\begin{eqnarray}
+(a_2, \cdots, a_n) \notin \mathbb{V}(g_1, \cdots, g_s)
+\end{eqnarray}
+and we can apply the Extension Theorem:
+\begin{eqnarray}
+\exists a_1 \in \mathbb{C} \text{ s.t. } (a_1, a_2, \cdots, a_n) \in \mathbb{V}(I),
+\end{eqnarray}
+and
+\begin{eqnarray}
+(a_2, \cdots, a_n) = \pi_1(a_1, a_2, \cdots, a_n) \in \pi_1(V).
+\end{eqnarray}
+Therefore, in either case
+\begin{eqnarray}
+a \in V(I_1) \Rightarrow a \in \pi_1(V) \cup \left( \mathbb{V}(g_1, \cdots, g_s) \cap \mathbb{V}(I_1) \right) 
+\end{eqnarray}
+that is
+\begin{eqnarray}
+\mathbb{V}(I_1) \subset \pi_1(V) \cup \left( \mathbb{V}(g_1, \cdots, g_s) \cap \mathbb{V}(I_1) \right) 
+\end{eqnarray}
+$\blacksquare$
+
+\subsection{? The Closure Theorem, a special case}
+Let $V := \mathbb{V}(f_1, \cdots, f_s) \subset \mathbb{C}^n$ and let $I_1$ be the 1st elimination ideal of $\left< f_1, \cdots, f_s \right>$.
+Then
+When $V \neq \emptyset$, there exists an affine variety $W \subsetneq \mathbb{V}(I_1)$ s.t., $\mathbb{V}(I_1) - W \subset \pi_1(V).$\footnote{
+This is an instance of the following general statement; let $V := \mathbb{V}(f_1, \cdots, f_s) \subset \mathbb{C}^n$ and let $I_l$ be the $l$th elimination ideal of $\left< f_1, \cdots, f_s \right>$.
+Then
+\begin{enumerate}
+\item $\mathbb{V}(I_l)$ is the smallest affine variety containing $\pi_l(V) \subset \mathbb{C}^{n-l}$.
+
+\item When $V \neq \emptyset$, there exists an affine variety $W \subsetneq \mathbb{V}(I_l)$ s.t. $\mathbb{V}(I_l) - W \subset \pi_l(V).$
+\end{enumerate}
+}
+
+\subsubsection{Proof}
+Let 
+\begin{eqnarray}
+W' := \mathbb{V}(g_1, \cdots, g_s) \cap \mathbb{V}(I_1)
+\end{eqnarray}
+and note that $W$ is an affine variety by \S\ref{intersectionAndUnionOfVarieties}.
+The decomposition in \S\ref{GeometricExtensionTheorem}
+\begin{eqnarray}
+\mathbb{V}(I_1) &=& \pi_1(V) \cup \left( \mathbb{V}(g_1, \cdots, g_s) \cap \mathbb{V}(I_1) \right)\\
+&=& \pi_1(V) \cup W'
+\end{eqnarray}
+implies 
+\begin{eqnarray}
+\mathbb{V}(I_1) - W' \subset \pi_1(V),
+\end{eqnarray}
+and if $W' \neq \mathbb{V}(I_1)$, then we are done.
+
+If $W' = \mathbb{V}(I_1)$, we need to change the equations defining $V$ s.t. $W$ becomes smaller.
+
+\paragraph{$W' = \mathbb{V}(I_1) \Rightarrow V = \mathbb{V}(f_1, \cdots, f_s, g_1, \cdots, g_s)$}
+$\because$ Since
+\begin{eqnarray}
+f_1(a) = \cdots= f_s(a) = g_1(a) = \cdots = g_s = 0 \Rightarrow f_1(a) = \cdots= f_s(a) = 0 \qquad
+\end{eqnarray}
+one direction follows
+\begin{eqnarray}
+\mathbb{V}(f_1, \cdots, f_s, g_1, \cdots, g_s) \subset V := \mathbb{V}(f_1, \cdots, f_s) 
+\end{eqnarray}
+by definition in \S\ref{DefOfAV}.
+
+For the opposite direction, let
+\begin{eqnarray}
+(a_1,a_2, \cdots, a_n) \in V := \mathbb{V}(f_1, \cdots, f_s).
+\end{eqnarray}
+Then from \S\ref{pi_lVIsInVI_l},
+\begin{eqnarray}
+(a_2, \cdots, a_n) \in \pi_1(V) \subset \mathbb{V}(I_1) = W':= \mathbb{V}(g_1, \cdots, g_s) \cap \mathbb{V}(I_1)
+\end{eqnarray}
+and $\forall j$,
+\begin{eqnarray}
+g_j(a_2, \cdots, a_n) = 0.
+\end{eqnarray}
+Thus
+\begin{eqnarray}
+(a_1,a_2, \cdots, a_n) \in \mathbb{V}(f_1, \cdots, f_s, g_1, \cdots, g_s)
+\end{eqnarray}
+and
+\begin{eqnarray}
+\mathbb{V}(f_1, \cdots, f_s, g_1, \cdots, g_s) \supset V := \mathbb{V}(f_1, \cdots, f_s).
+\end{eqnarray}
+
+Therefore
+\begin{eqnarray}
+\mathbb{V}(f_1, \cdots, f_s, g_1, \cdots, g_s) = V := \mathbb{V}(f_1, \cdots, f_s).
+\end{eqnarray}
+$\blacksquare$
+
+Let
+\begin{eqnarray}
+I := \left< f_1, \cdots, f_s \right>
+\end{eqnarray}
+be our original ideal and
+\begin{eqnarray}
+\tilde{I} := \left< f_1, \cdots, f_s, g_1, \cdots, g_s \right>.
+\end{eqnarray}
+Then in general $I \subset \tilde{I}$, but we already have
+\begin{eqnarray}
+\mathbb{V}(I) = \mathbb{V}(\tilde{I}).
+\end{eqnarray}
+
+\paragraph{? $\mathbb{V}(I_1) = \mathbb{V}(\tilde{I_1})$}
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{The Algebra-Geometry Dictionary}
+\section{Hilbert's Nullstellensatz}
+Null(=Zero), Stellen(=Places), Satz(=Theorem).
+
+\subsection{? The Weak Nullstellensatz}
+Let $\mathbb{K}$ be an algebraically closed filed and let $I \subset \mathbb{K}[x_1, \cdots, x_n]$ be an ideal.
+Then
+\begin{eqnarray}
+\mathbb{V}(I) = \emptyset \Rightarrow I = \mathbb{K}[x_1, \cdots, x_n].
+\end{eqnarray}
+
+\subsubsection{Proof}
+The standard strategy is to show
+\begin{eqnarray}
+1 \in I.
+\end{eqnarray}
+It is because, if $1 \in I$ then $\forall f \in \mathbb{K}[x_1, \cdots, x_n]$,
+\begin{eqnarray}
+f = f * 1 \in I \Leftrightarrow \mathbb{K}[x_1, \cdots, x_n] \subset I.
+\end{eqnarray}
+
+We prove by induction.
+
+\paragraph{$n=1$ case}
+From \S\ref{InOneDimension}, every ideal $I$ of $\mathbb{K}[x]$ is generated by a single polynomial $f$:
+\begin{eqnarray}
+I = \left< f\right>
+\end{eqnarray}
+Then the variety is the set of roots
+\begin{eqnarray}
+\left\{ \left. a \in \mathbb{K} \right| f(a) = 0 \right\}.
+\end{eqnarray}
+
+Since $\mathbb{K}$ is algebraically closed, i.e., $\forall f \in \mathbb{K}[x]$,
+\begin{eqnarray}
+\text{$f$ is not a const. poly.} \Rightarrow \exists a \in \mathbb{K} \text{ s.t. } f(a) = 0,
+\end{eqnarray}
+if $\forall a \in \mathbb{K}, f(a) \neq 0$ then $f$ is a non zero constant polynomial.
+\begin{eqnarray}
+\mathbb{V}(\left< f\right>) \Rightarrow f = c (\neq 0) \in \mathbb{K}.
+\end{eqnarray}
+Since $c \neq 0$, 
+\begin{eqnarray}
+\exists c^{-1} \in \mathbb{K}.
+\end{eqnarray}
+Therefore,
+\begin{eqnarray}
+c^{-1} * f = c^{-1} * c = 1 \in I
+\end{eqnarray}
+and 
+\begin{eqnarray}
+\forall I \subset \mathbb{K}[x], \mathbb{V}(I) = \emptyset \Rightarrow I = \mathbb{K}[x].
+\end{eqnarray}
+
+\paragraph{$(n-1)$ case $\Rightarrow n$ case}
+Assume $(n-1)$ case
+\begin{eqnarray}
+\forall J \subset \mathbb{K}[x_2, \cdots, x_n], \mathbb{V}(J) = \emptyset \Rightarrow J = \mathbb{K}[x_2, \cdots, x_n]
+\end{eqnarray}
+and consider an arbitrary ideal
+\begin{eqnarray}
+I := \left< f_1, \cdots, f_s \right> \subset \mathbb{K}[x_1, \cdots, x_n]
+\end{eqnarray}
+for which $\mathbb{V}(I) = \emptyset $.
+Since can assume $f_1$ is not a constant,\footnote{
+If $f_1$ is a non zero constant polynomial, then using the same argument in $n=1$ case, we can show $1 \in I$.
+} suppose $f_1$ has total degree $N \geq 1$.
+
+Consider the following linear transformation:
+\begin{eqnarray}
+\nonumber
+x_1 &=& y_1, \\
+\nonumber
+x_2 &=& y_2 + a_2*y_1, \\
+\nonumber
+&\vdots&\\
+\label{LinearTransformInHWN}
+x_n &=& y_n + a_n*y_1,
+\end{eqnarray}
+where $a_2, \cdots, a_n$ are constants in $\mathbb{K}$.
+Then $f_1$ bocomes
+\begin{eqnarray}
+f_1(x_1, \cdots, x_n) &=& f_1(y_1, y_2 + a_2*y_1, \cdots, y_n + a_n*y_1) \\
+&=& c(a_2, \cdots, a_n) * y_1^N + O(y_1^{N-1})
+\end{eqnarray}
+
+\paragraph{? Lemma ($c(a_2, \cdots, a_n)$ is not constantly 0)}
+Consider a polynomial $f \in \mathbb{K}[x_1, \cdots, x_n]$ under the linear transform in eq.(\ref{LinearTransformInHWN}).
+When we write $f$ as a sum
+\begin{eqnarray}
+f = h_N + \cdots + h_1 + h_0
+\end{eqnarray}
+of homogeneous polynomials
+\begin{eqnarray}
+h_m(x_1, \cdots, x_n) = \sum_{|\alpha| = m} c_\alpha x^\alpha, c_\alpha \in \mathbb{K}.
+\end{eqnarray}
+Note that, under the linear transform in eq.(\ref{LinearTransformInHWN}), the degree of above $h_m$ is unchanged.
+
+Define
+\begin{eqnarray}
+\tilde{f}(y_1, \cdots, y_n) &:=& f(y_1, y_2 + a_2y_1, \cdots, y_n + a_n y_1)\\
+&=& c(a_2, \cdots, a_n) * y_1^N + O(y_1^{N-1})
+\end{eqnarray}
+If we put $y_2 = \cdots = y_n = 0$,
+\begin{eqnarray}
+\tilde{f}(y_1, y_2 = \cdots = y_n = 0) &=& f(y_1, a_2y_1, \cdots, a_n y_1) \\
+&=& h_N(y_1, a_2y_1, \cdots, a_n y_1) + O(y_1^{N-1}) \\
+&=& h_N(1, a_2, \cdots, a_n) * y_1^N + O(y_1^{N-1}),
+\end{eqnarray}
+since $h_N$ has homogeneous degree $N$.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\chapter{Polynomial and Rational Functions on a Variety}
+\section{Polynomial Mappings}
+\subsection{Definition of polynomial mappings}
+\label{polynomialMappings}
+Let $V \subset \mathbb{K}^m, W \subset \mathbb{K}^n$ be varieties.
+A function
+\begin{eqnarray}
+\phi: V \to W
+\end{eqnarray}
+is a polynomial mapping (or regular mapping) iff there exist polynomials
+\begin{eqnarray}
+f_1, \cdots, f_n \in \mathbb{K}[x_1, \cdots, x_m]
+\end{eqnarray}
+s.t., $\forall (a_1, \cdots, a_m) \in V$,
+\begin{eqnarray}
+\phi(a_1, \cdots, a_m) = \left( f_1(a_1, \cdots, a_m), \cdots, f_n(a_1, \cdots, a_m) \right).
+\end{eqnarray}
+
+We call this n-tuple of polynomials
+\begin{eqnarray}
+(f_1, \cdots, f_n) \in \left( \mathbb{K}[x_1, \cdots, x_m] \right)^n
+\end{eqnarray}
+represents $\phi$.
+
+\subsection{Proposition}
+Let $V \subset \mathbb{K}^m$ be an affine variety.
+Then
+\begin{enumerate}
+\item $f,g \in \mathbb{K}[x_1, \cdots, x_m]$ represent the same polynomial function of $V$ iff $f-g \in \mathbb{I}(V)$.
+
+\item $(f_1, \cdots, f_n)$ and $(g_1, \cdots, g_n)$ represent the same polynomial mapping from $V$ to $\mathbb{K}^n$ iff $f_i - g_i \in \mathbb{I}(V)$ for each $1 \leq i \leq n$.
+\end{enumerate}
+
+\subsubsection{Proof}
+It suffices to show the 1st case.
+
+If $f$ and $g$ represent the same function, then $\forall a \in V$,
+\begin{eqnarray}
+f(a) = g(a) \Leftrightarrow (f - g)(a) = 0.
+\end{eqnarray}
+Thus 
+\begin{eqnarray}
+f - g \in \mathbb{I}(V)
+\end{eqnarray}
+
+Conversely, if
+\begin{eqnarray}
+f - g \in \mathbb{I}(V),
+\end{eqnarray}
+then $\forall a = (a_1, \cdots, a_m) \in V$,
+\begin{eqnarray}
+(f-g)(a) = f(a) - g(a) = 0.
+\end{eqnarray}
+Hence, $f$ and $g$ represent the same function on $V$.\\
+$\blacksquare$
+
+\subsection{Definition of $\mathbb{K}[V]$}
+Let us define
+\begin{eqnarray}
+\mathbb{K}[V] := \left\{\phi : V \to \mathbb{K} \left| \phi \text{ is a polynomial function} \right. \right\}
+\end{eqnarray}
+the set of polynomial functions.\footnote{
+I prefer the exponential notion
+\begin{eqnarray}
+\mathbb{K}^V := \mathbb{K}[V].
+\end{eqnarray}
+}
+
+\subsubsection{$\mathbb{K}[V]$ is a commutative ring}
+$\forall \phi, \psi \in \mathbb{K}[V]$, the addition
+\begin{eqnarray}
+(\phi + \psi) (p) := \phi(p) + \psi(p), &\forall p \in V,
+\end{eqnarray}
+and the multiplication
+\begin{eqnarray}
+(\phi * \psi) (p) := \phi(p) * \psi(p), &\forall p \in V.
+\end{eqnarray}
+Identities are constant functions, e.g.,
+\begin{eqnarray}
+0 : V \to \mathbb{K}; p \to 0.
+\end{eqnarray}
+Associativity and distributive laws come from that of $\mathbb{K}$, e.g., $\forall p \in V$,
+\begin{eqnarray}
+(\phi + (\psi + \chi) ) (p) &=& \phi(p) + (\psi + \chi)(p)\\
+&=& \phi(p) + \psi(p) + \chi(p)\\
+&=& (\phi(p) + \psi(p)) + \chi(p)\\
+&=& ((\phi + \psi) + \chi)(p).
+\end{eqnarray}
+
+\subsection{? Proposition}
+Let $V \subset \mathbb{K}^n$ be an affine variety.
+The following statements are equivalent.
+\begin{enumerate}
+\item $V$ is irreducible.
+\item $\mathbb{I}(V)$ is a prime ideal.
+\item $\mathbb{K}[V]$ is an integral domain.
+\end{enumerate}
+
+
+
+
+
+
+\section{Quotients of polynomial Rings}
+\subsection{Congruent modulo $I$}
+Let $I \subset \mathbb{K}[x_1, \cdots, x_m]$ be an ideal, and let $f,g \in \mathbb{K}[x_1, \cdots, x_m]$.
+We say $f$ and $g$ are congruent modulo $I$,
+\begin{eqnarray}
+f \equiv g \mod I :\Leftrightarrow f-g \in I.
+\end{eqnarray}
+
+This congruence modulo $I$ is an equivalence relation on $\mathbb{K}[x_1, \cdots, x_n]$.
+\begin{enumerate}
+\item (reflexive) $\forall f \in I$,
+\begin{eqnarray}
+f - f = 0 \in I.
+\end{eqnarray}
+
+\item (symmetry) $\forall f,g \in I$,
+\begin{eqnarray}
+f - g \in I \Rightarrow g - f = -(f-g) \in I.
+\end{eqnarray}
+
+\item (transitivity) $\forall f,g,h \in I$,
+\begin{eqnarray}
+f-g \in I, g-h \in I \Rightarrow f-h = (f-g) + (g-h) \in I.
+\end{eqnarray}
+
+\end{enumerate}
+We denote the equivalence class which is represented by $f \in I$,
+\begin{eqnarray}
+[f] := \left\{ \left. g \in \mathbb{K}[x_1, \cdots, x_m] \right| g \equiv f \mod I \right\}
+\end{eqnarray}
+
+\subsection{? Proposition}
+\label{121Correspondence}
+The distinct polynomial functions in $\mathbb{K}[V]$ are in one-to-one correspondence with the equivalence classes of polynomials under congruence modulo $\mathbb{I}(V)$.
+
+\subsubsection{Proof}
+Consider an arbitrary polynomial functions $\phi : V \to \mathbb{K}$, and its representation
+\begin{eqnarray}
+f \in \left( \mathbb{K}[x_1, \cdots, x_m] \right)
+\end{eqnarray}
+s.t., $\forall (a_1, \cdots, a_m) \in V$,
+\begin{eqnarray}
+\phi(a_1, \cdots, a_m) = f(a_1, \cdots, a_m).
+\end{eqnarray}
+We claim that
+\begin{eqnarray}
+[f] \stackrel{\Phi}{\mapsto} \phi
+\end{eqnarray}
+is the one-to-one correspondence.
+
+Since every polynomial functions have its representation (see \S\ref{polynomialMappings}), this correspondence is surjective:
+\begin{eqnarray}
+\forall \phi : V \to \mathbb{K}, \exists f \in \left( \mathbb{K}[x_1, \cdots, x_m] \right) \text{ is a rep.} \Rightarrow \exists [f].
+\end{eqnarray}
+
+Next, if we suppose
+\begin{eqnarray}
+\Phi([f]) = \Phi([g]) : V \to \mathbb{K},
+\end{eqnarray}
+then both $f$ and $g$ is a representation of this map.
+Therefore, $\forall p \in V$,
+\begin{eqnarray}
+f(p) = g(p) \Rightarrow (f-g)(p) = 0
+\end{eqnarray}
+i.e., the difference is in $\mathbb{I}(V)$:
+\begin{eqnarray}
+f-g \in \mathbb{I}(V) \Leftrightarrow [f] = [g].
+\end{eqnarray}
+So this correspondence is injective.\\
+$\blacksquare$
+
+\subsection{Quotients}
+\label{Quotients}
+The quotient of $\mathbb{K}[x_1, \cdots, x_m]$ modulo $I$,
+\begin{eqnarray}
+\mathbb{K}[x_1, \cdots, x_m] / I,
+\end{eqnarray}
+is the set of equivalence classes of congruence modulo $I$:
+ \begin{eqnarray}
+\mathbb{K}[x_1, \cdots, x_m] / I := \left\{ [f] \left| f \in \mathbb{K}[x_1, \cdots, x_m] \right. \right\}
+\end{eqnarray}
+
+$\mathbb{K}[x_1, \cdots, x_m] / I $ is a commutative ring.
+The addition
+\begin{eqnarray}
+[f] + [g] := [f+g]
+\end{eqnarray}
+is well defined, since $\forall f' \in [f], g' \in [g]$, there exists some elements in $I$ and
+\begin{eqnarray}
+f' = f + i, g' = g + j, i,j \in I.
+\end{eqnarray}
+So
+\begin{eqnarray}
+f' + g' &=& f + g + (i+j)
+\end{eqnarray}
+and $(i+j) \in I$.
+This means
+\begin{eqnarray}
+f' + g' \in [f+g].
+\end{eqnarray}
+
+Similarly, the multiplication
+\begin{eqnarray}
+[f] * [g] := [f*g]
+\end{eqnarray}
+is also well defined:
+\begin{eqnarray}
+(f' + i) * (g' + j) = f'*g' + f'*j + i*g' + i*j,
+\end{eqnarray}
+and $f'*j + i*g' + i*j \in I$, and
+\begin{eqnarray}
+f' * g' \in [f*g].
+\end{eqnarray}
+
+Identities
+\begin{eqnarray}
+[0], [1]
+\end{eqnarray}
+are also well defined, and associativity and the distributive laws are from that of $\mathbb{K}[x_1, \cdots, x_n]$.\\
+$\blacksquare$
+
+\subsection{Theorem}
+The one-to-one correspondence between two commutative rings
+\begin{eqnarray}
+\Phi : \mathbb{K}[x_1, \cdots, x_n]/ \mathbb{I}(V) \stackrel{\cong}{\to} \mathbb{K}[V] 
+\end{eqnarray}
+given in \S\ref{121Correspondence}, preserves sums and products.
+That is, $\Phi$ is a ring homomorphism.
+One-to-one homomorphisms are called isomorphisms.
+
+\subsubsection{Proof}
+Let $[f], [g] \in \mathbb{K}[x_1, \cdots, x_n]/ \mathbb{I}(V)$, then
+\begin{eqnarray}
+\Phi([f]) = \exists! \phi \in \mathbb{K}[V], \Phi([g]) = \exists! \psi \in \mathbb{K}[V]
+\end{eqnarray}
+hold.
+Therefore
+\begin{eqnarray}
+\Phi([f+g]) := \phi + \psi = \Phi([f]) + \Phi([g])
+\end{eqnarray}
+is well defined.
+
+Similarly, we can prove the multiplication law, and that of inverse $\Phi^{-1}$.\\
+$\blacksquare$
+
+\subsection{Definition of ring isomorphisms}
+Let $R,S$ be commutative rings.
+\begin{enumerate}
+\item A mapping $\phi: R \to S$ is a ring homomorphism iff $\phi$ preserves sums and products:
+\begin{eqnarray}
+\phi(r+r') = \phi(r) + \phi(r'), & \phi(r*r') = \phi(r) * \phi(r').
+\end{eqnarray}
+In addition,
+\begin{eqnarray}
+1_R \stackrel{\phi}{\mapsto} 1_S.
+\end{eqnarray}
+
+\item A mapping $\phi: R \to S$ is a ring isomorphism iff
+
+\begin{enumerate}
+\item $\phi: R \to S$ is a ring homomorphism.
+
+\item $\phi: R \to S$ is bijective.
+
+\end{enumerate}
+
+\item Two rings $R,S$ are isomorphic iff there exists an isomorphism,
+\begin{eqnarray}
+R \stackrel{\phi}{\cong} S.
+\end{eqnarray}
+
+\end{enumerate}
+
+\subsection{Definition of ideal}
+A subset $I$ of a commutative ring $R$ is an ideal in R iff
+\begin{enumerate}
+\item $0_R \in I$
+
+\item $\forall a, b \in I \Rightarrow a+b \in I$
+
+\item $\forall a \in I, r \in R \Rightarrow r*a \in I$
+\end{enumerate}
+
+\subsection{Proposition}
+Let $I$ be an ideal in $\mathbb{K}[x_1, \cdots, x_n]$.
+The ideals in the quotient ring $\mathbb{K}[x_1, \cdots, x_n] / I$ are in one-to-one correspondence with the ideals of $\mathbb{K}[x_1, \cdots, x_n]$ containing $I$, i.e. the ideal $J$ s.t. $I \subset J \subset \mathbb{K}[x_1, \cdots, x_n]$.
+
+\subsubsection{Proof}
+Consider $I \subset \forall J \subset \mathbb{K}[x_1, \cdots, x_n]$.
+We claim that
+\begin{eqnarray}
+J \mapsto J/I := \left\{ \left. [j] \in \mathbb{K}[x_1, \cdots, x_n] / I \right| j \in J \right\}
+\end{eqnarray}
+is the one-to-one correspondence.
+
+We prove $J/I$ is an ideal; since $0 \in J$,
+\begin{eqnarray}
+[0] \in J/I
+\end{eqnarray}
+$\forall [j],[k] \in J/I$, the addition is guaranteed by that of $\mathbb{K}[x_1, \cdots, x_n] / I$:
+\begin{eqnarray}
+[j] + [k] := [j+k] \in J/I, 
+\end{eqnarray}
+since $\forall j,k \in J, j+ k \in J$.
+Similarly,
+\begin{eqnarray}
+[j] * [k] := [j*k] \in J/I.
+\end{eqnarray}
+
+Finally, if $[j] \in J/I, [r] \in \mathbb{K}[x_1, \cdots, x_n] / I$, then
+\begin{eqnarray}
+[r] * [j] := [r*j],
+\end{eqnarray}
+but $\forall j \in J, r \in \mathbb{K}[x_1, \cdots, x_n], r*j \in J$ and
+\begin{eqnarray}
+[r] * [j] := [r*j] \in J/I.
+\end{eqnarray}
+
+Thus, $J/I$ is an ideal.
+
+So $J \mapsto J/I$ is surjective, and clearly injective:
+\begin{eqnarray}
+J = K \Rightarrow J/I = K/I.
+\end{eqnarray}
+Therefore
+\begin{eqnarray}
+J \mapsto J/I
+\end{eqnarray}
+is one-to-one.
+
+Let us consider the inverse, for arbitrary $\tilde{J} \in \mathbb{K}[x_1, \cdots, x_n] / I$, define
+\begin{eqnarray}
+J := \left\{ \left. j \in \mathbb{K}[x_1, \cdots, x_n] \right| [j] \in \tilde{J} \right\}.
+\end{eqnarray}
+
+$\forall i \in I$,
+\begin{eqnarray}
+[i] = [0] \in \tilde{J} \text{ i.e. } i \in J
+\end{eqnarray}
+so this $J$ contain $I$:
+\begin{eqnarray}
+I \subset J.
+\end{eqnarray}
+
+Since $I$ is an ideal,
+\begin{eqnarray}
+0 \in I \subset J.
+\end{eqnarray}
+$\forall j,k \in J$,
+\begin{eqnarray}
+[j], [k] \in \tilde{J}
+\end{eqnarray}
+by definition, and
+\begin{eqnarray}
+[j+k] := [j] + [k] \in \tilde{J},
+\end{eqnarray}
+so
+\begin{eqnarray}
+j+k \in J.
+\end{eqnarray}
+
+Finally, $\forall j \in J, r \in \mathbb{K}[x_1, \cdots, x_n]$,
+\begin{eqnarray}
+[j] \in \tilde{J}
+\end{eqnarray}
+and by definition in \S\ref{Quotients},
+\begin{eqnarray}
+[r] \in \mathbb{K}[x_1, \cdots, x_n]/I.
+\end{eqnarray}
+Therefore,
+\begin{eqnarray}
+[r*j] := [r] * [j] \in \tilde{J} \Leftrightarrow r*j \in J.
+\end{eqnarray}
+
+Thus, $J$ is an ideal, and this mapping $J \mapsfrom J$ is the inverse.\footnote{Since we have shown $J \mapsto J/I$ is bijective, if exists, the inverse is uniquely determined.}
+
+Schematically, 
+\begin{eqnarray}
+\{J | I \subset J \subset \mathbb{K}[x_1, \cdots, x_n] \} && \{\tilde{J} \subset \mathbb{K}[x_1, \cdots, x_n]/ I\} \\
+J &\mapsto& J/I := \left\{ \left. [j] \in \mathbb{K}[x_1, \cdots, x_n] / I \right| j \in J \right\} \qquad\qquad\\
+J := \left\{ \left. j \in \mathbb{K}[x_1, \cdots, x_n] \right| [j] \in \tilde{J} \right\} &\mapsfrom& \tilde{J}
+\end{eqnarray}
+$\blacksquare$
+
+\subsection{Corollary}
+Every ideal in the quotient ring $\mathbb{K}[x_1, \cdots, x_n] / I$ is finitely generated.
+
+\subsubsection{Proof}
+From above, every ideal in $\mathbb{K}[x_1, \cdots, x_n] / I$ can be uniquely written as
+\begin{eqnarray}
+J/I
+\end{eqnarray}
+of some $I \subset J \subset \mathbb{K}[x_1, \cdots, x_n]$.
+
+The Hilbert Basis Theorem in \S\ref{HilbertBasisTheorem} implies this $J$ is finitely generated:
+\begin{eqnarray}
+J = \left< f_1, \cdots, f_s \right>,
+\end{eqnarray}
+and $\forall j \in J$,
+\begin{eqnarray}
+\exists h_i \in \mathbb{K}[x_1, \cdots, x_n], j = \sum_i h_i * f_i.
+\end{eqnarray}
+Therefore, $\forall [j] \in J/I$,
+\begin{eqnarray}
+[j] &=& \left[ \sum_i h_i * f_i \right] \\
+&=& \sum_i [h_i] * [f_i]
+\end{eqnarray}
+that is
+\begin{eqnarray}
+J/I = \left< [f_1], \cdots, [f_s] \right>.
+\end{eqnarray}
+So, the classes $[f_1], \cdots, [f_s]$ generate $J/I$.\\
+$\blacksquare$
+
+
+
+
+
+
+
+
+
+
+
+\end{document}
