@@ -11,6 +11,9 @@
 
 \usepackage{tikz}
 
+% To show all the labels. Remove this when finish.
+\usepackage{showkeys}
+
 \DeclareMathOperator*{\colim}{colim}
 \DeclareMathOperator*{\coker}{coker}
 
@@ -59,7 +62,7 @@ DENNIS S. KEELER
 \end{enumerate}
 
 \chapter{Basics}
-We will assume living (working) knowledge on mathematics.
+We assume living (working) knowledge on mathematics.
 
 \section{Set theoretical gadgets}
 Our set theory is ZFC.
@@ -73,7 +76,7 @@ A binary relation $\rho$ on a set $S$ is a function\footnote{This is Haskell typ
 \end{eqnarray}
 i.e., $\forall a,b \in S$, we can determine whether $a \rho b \left( = \rho(a,b) \right)$ is \verb|True| or \verb|False|.
 
-A set theoretical implementation is
+A set theoretical implementation is a subset in the product
 \begin{eqnarray}
 \rho \subset A \times A,
 \end{eqnarray}
@@ -81,7 +84,6 @@ and
 \begin{eqnarray}
 a \rho b :\Leftrightarrow (a,b) \in \rho.
 \end{eqnarray}
-
 
 \subsection{Partially ordered sets}
 Let $\leq$ be a binary relation on a set $S$.
@@ -101,7 +103,7 @@ holds.
 That is, all two elements are comparable in a totally ordered set.
 
 \subsection{Well-ordered sets}
-A partially ordered set $(S, \leq)$ is well-ordered iff an arbitrary subset $\forall T \subset S$ has a minimum element.
+A partially ordered set $(S, \leq)$ is well-ordered iff an arbitrary subset $T \subset S$ has a minimum element.
 That is,
 \begin{eqnarray}
 \forall T \subset S, \exists t_0 \in T \text{ s.t. } \forall t \in T, t_0 \leq t.
@@ -150,8 +152,8 @@ A field is a ring $(\mathbb{K},+,*)$ whose non-zero elements form an abelian gro
 \begin{eqnarray}
 \forall r \in \mathbb{K}, r \neq 0 \Rightarrow \exists r^{-1} \in \mathbb{K} \text{ s.t. } r*r^{-1} = 1 = r^{-1}*r.
 \end{eqnarray}
-A field $\mathbb{K}$ is a finite field iff the underlying set $\mathbb{K}$ is finite.
-A field $\mathbb{K}$ is called infinite field iff the underlying set is infinite.
+A field $\mathbb{K}$ is a finite field iff the underlying set $\mathbb{K}$ is finite, e.g., any quotient ring of prime $\mathbb{Z}_p$.
+A field $\mathbb{K}$ is called infinite field iff the underlying set is infinite, say $\mathbb{Q,R,C}$.
 
 \subsection{Equivalence relations}
 An equivalence relation $\sim$ on a set $S$ is a binary relation which is reflexive, symmetric, and transitive:
@@ -184,29 +186,222 @@ a \sim b \Rightarrow [a] = [b].
 $\blacksquare$
 
 \subsubsection{Note}
-This partition is a function from $S$ to the subsets of $S$:
+This partition is a function from $S$ to the (non empty) subsets of $S$:
 \begin{eqnarray}
 [] : S \to (2^S - \emptyset); a \mapsto [a].
 \end{eqnarray}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{The fundamental theorem in algebra}
+\section{Numbers; recipes without arithmetics}
+Here we review $\mathbb{N, Z, Q, R},$ and $\mathbb{C}$.
+If the readers are already familiar with (ZFC axiomatic) set theory and the set theoretic implementation of $\mathbb{N, Z, Q, R},$ and $\mathbb{C}$, you can skip this section.
+
+\subsection{Natural numbers $\mathbb{N}$}
+Here is a recursive implementation of natural numbers (Peano):
+\begin{eqnarray}
+0 &:=& \emptyset \\
+n+1 &:=& n \cup \{n\}
+\end{eqnarray}
+
+\subsection{Integers $\mathbb{Z}$}
+The set of integers is complete under subtraction:
+\begin{eqnarray*}
+\mathbb{Z} := (\mathbb{N} \times \mathbb{N})/ S,
+\end{eqnarray*}
+where the equivalence relation $S$ is given by
+\begin{eqnarray}
+(m_1, m_2)S(n_1,n_2) :\Leftrightarrow m_1 + n_2 = m_2 + n_1.
+\end{eqnarray}
+I.e., a negative integer $(-m) \in \mathbb{Z}$ of some $m \in \mathbb{N}$ is represented by, for example,
+\begin{eqnarray}
+(0,m).
+\end{eqnarray}
+
+\subsection{Rational numbers $\mathbb{Q}$}
+The set of rational numbers is complete under non-zero division:
+\begin{eqnarray}
+\mathbb{Q} := \left(\mathbb{Z} \times (\mathbb{Z} - \{0\}) \right)/F,
+\end{eqnarray}
+where the equivalence relation $F$ is given by
+\begin{eqnarray}
+(a,b) F (c, d) : \Leftrightarrow a * d = b * c.
+\end{eqnarray}
+Usually we denote
+\begin{eqnarray}
+\frac{a}{b} := (a,b) \in \mathbb{Q}.
+\end{eqnarray}
+
+\subsection{Real numbers $\mathbb{R}$}
+The set of real numbers should satisfy the Axiom of continuity, but before state it, let us define an important tool, the cut.
+
+\subsubsection{Dedekind cut of $\mathbb{Q}$}
+A Dedekind cut is given by a pair
+\begin{eqnarray}
+(A_-, A_+)
+\end{eqnarray}
+of non-empty subsets of $\mathbb{Q}$:
+\begin{eqnarray}
+A_\mp \in 2^\mathbb{Q}-\{\emptyset\}
+\end{eqnarray}
+with
+\begin{eqnarray}
+A_- \cup A_+ = \mathbb{Q}
+\end{eqnarray}
+and
+\begin{eqnarray}
+x \in A_-, y \in A_+ \Rightarrow x < y.
+\end{eqnarray}
+
+\subsubsection{Definition of $\mathbb{R}$}
+There are three possibilities
+\begin{eqnarray}
+\label{notExistsExists}
+\nexists \max A_-, \exists \min A_+ \\
+\label{existsNotExists}
+\exists \max A_-, \nexists \min A_+ \\
+\label{notExistsNotExists}
+\nexists \max A_-,  \nexists \min A_+ 
+\end{eqnarray}
+since they do not share the border element.
+Here is a preliminary definition of $\mathbb{R}$:\footnote{
+Alternatively, we can define $\mathbb{R}$ be the set of all Dedekind cuts identifying eq.(\ref{notExistsExists}) and eq.(\ref{existsNotExists}).
+}
+\begin{eqnarray}
+\label{preReal}
+\mathbb{R} := \left\{\left. (A_-, A_+) \right| \text{Dedekind cut with} (\ref{existsNotExists}), (\ref{notExistsNotExists})\right\}
+\end{eqnarray}
+
+We define a total order $\leq$ as follows.
+Let 
+\begin{eqnarray}
+\alpha := (A_-, A_+), \beta := (B_-, B_+) \in \mathbb{R}
+\end{eqnarray}
+then we define
+\begin{eqnarray}
+\alpha \leq \beta :\Leftrightarrow A_- \subset B_-.
+\end{eqnarray}
+
+\subsubsection{The Axiom of continuity}
+A cut of $\mathbb{R}$
+\begin{eqnarray}
+(A,B)
+\end{eqnarray}
+with
+\begin{eqnarray}
+A \cup B = \mathbb{R}
+\end{eqnarray}
+and
+\begin{eqnarray}
+x \in A, y \in B \Rightarrow x < y
+\end{eqnarray}
+satisfies either
+\begin{eqnarray}
+\label{minA}
+\exists \min A, \nexists \max B
+\end{eqnarray}
+or
+\begin{eqnarray}
+\label{maxB}
+\nexists \min A, \exists \max B.
+\end{eqnarray}
+
+\subsubsection{Check}
+We prove that our $\mathbb{R}$ in eq.(\ref{preReal}) satisfies the Axiom of continuity.
+Let 
+\begin{eqnarray}
+\{\alpha_\lambda\}_{\lambda \in \Lambda}
+\end{eqnarray}
+be bounded subspaces of $\mathbb{R}$, and
+\begin{eqnarray}
+\alpha_\lambda := (A^\lambda_-, A^\lambda_+).
+\end{eqnarray}
+Now
+\begin{eqnarray}
+\alpha &:=& (A_-, A_+) \\
+A_- &:=& \bigcup_{\lambda \in \Lambda} A^\lambda_- \\
+A_+ &:=& \mathbb{Q} - A_-
+\end{eqnarray}
+is an upper bound of $\{\alpha_\lambda\}_{\lambda \in \Lambda}$, since $\forall \lambda \in \Lambda$,
+\begin{eqnarray}
+A^\lambda_- \subset A_- \Leftrightarrow \alpha_\lambda \leq \alpha
+\end{eqnarray}
+by definition.
+
+Indeed this $\alpha$ is the minimum of upper bound of $\{\alpha_\lambda\}_{\lambda \in \Lambda}$, i.e., the supremum: if 
+\begin{eqnarray}
+\beta := (B^\lambda_-, B^\lambda_+)
+\end{eqnarray}
+is another upper bound of $\{\alpha_\lambda\}_{\lambda \in \Lambda}$, then 
+\begin{eqnarray}
+\forall \lambda \in \Lambda, A^\lambda_- \subset B.
+\end{eqnarray}
+This means
+\begin{eqnarray}
+A_- \subset B_- \Leftrightarrow \alpha \leq \beta.
+\end{eqnarray}
+Therefore, if $(A,B)$ is a cut of $\mathbb{R}$, then $A \subset \mathbb{R}$ has the supremum $\alpha \in \mathbb{R}$:
+\begin{eqnarray}
+\alpha := \sup A \in \mathbb{R}.
+\end{eqnarray}
+
+Finally we show that either $\alpha = \min A$ (eq.(\ref{minA})) or $\alpha = \max B$ (eq.(\ref{maxB})).
+If $\alpha \neq \max A$, then
+\begin{eqnarray}
+\alpha \in B.
+\end{eqnarray}
+By definition, $\forall \beta \in B$ is an upper bound of $\alpha$:
+\begin{eqnarray}
+\alpha \leq \beta,
+\end{eqnarray}
+that is
+\begin{eqnarray}
+\alpha = \min B.
+\end{eqnarray}
+$\blacksquare$
+
+\subsection{Complex numbers $\mathbb{C}$}
+Let us define
+\begin{eqnarray}
+\mathbb{C} := (\mathbb{R}\times \mathbb{R}, +, *),
+\end{eqnarray}
+where
+\begin{eqnarray}
+(a,b) + (c,d) &:=& (a+c, b+d) \\
+(a,b) * (c,d) &:=& (a*c - b* d, a*d + b*c).
+\end{eqnarray}
+Note that
+\begin{eqnarray}
+(0,1) * (0,1) := (-1,0).
+\end{eqnarray}
+Usually we denote
+\begin{eqnarray}
+a + \sqrt{-1} * b := (a,b) \in \mathbb{C}.
+\end{eqnarray}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{The fundamental theorem in algebra (Theorem 7, \S1.1)}
 Here we review the fact that $\mathbb{C}$ of complex numbers is algebraically closed.
 
 \subsection{($\epsilon$-$N$) convergence}
-For simplicity, consider $\mathbb{C}$ of complex numbers and a function
+Consider $\mathbb{C}$ of complex numbers and a function
 \begin{eqnarray}
 z: \mathbb{N} \to \mathbb{C}; z\mapsto z_n
 \end{eqnarray}
-so called a sequence.
-This $z$ converges to $c \in \mathbb{C}$ iff
+so called a sequence on $\mathbb{C}$.
+We usually write a sequence as
+\begin{eqnarray}
+\{ z_n \}_{n \in \mathbb{N}}.
+\end{eqnarray}
+
+A sequence $z$ converges to $c \in \mathbb{C}$ iff
 \begin{eqnarray}
 \forall \epsilon > 0, \exists N \in \mathbb{N} \text{ s.t. } (\forall n \geq N, |c - z_n| < \epsilon),
 \end{eqnarray}
 where $\forall a ,b \in \mathbb{R}$,
 \begin{eqnarray}
-|a + ib| :=  \sqrt{a^2 + b^2}
+|a + \sqrt{-1} b| :=  \sqrt{a^2 + b^2}
 \end{eqnarray}
 is the euclidean distance.
 
@@ -215,7 +410,8 @@ Consider a $\mathbb{C}$-valued sequence
 \begin{eqnarray}
 z: \mathbb{N} \to \mathbb{C}; z\mapsto z_n
 \end{eqnarray}
-which converges to $c \in \mathbb{C}$:
+which converges to $c \in \mathbb{C}$.
+We write this as
 \begin{eqnarray}
 \lim_{n \to \infty} z_n = c.
 \end{eqnarray}
@@ -224,9 +420,9 @@ A function $f: \mathbb{C} \to \mathbb{C}$ is continuous at $c \in \mathbb{C}$ if
 \begin{eqnarray}
 f(c) = f\left( \lim_{n \to \infty} z_n \right) = \lim_{n \to \infty} f(z_n).
 \end{eqnarray}
-A continuous function is a function which is continuous at every point.
+A continuous function is a function which is continuous at every point of its domain, i.e., every input.
 
-\subsection{Lemma (An extreme value theorem)}
+\subsection{Lemma}
 \label{aLemmaForFundamentalTheoremInAlgebra}
 Let
 \begin{eqnarray}
@@ -260,24 +456,24 @@ there is NO $z \in C_1$ s.t. $f(z) = \alpha$ but
 \begin{eqnarray}
 \forall n \in \mathbb{N}, f(z_n) < \alpha
 \end{eqnarray}
-and\footnote{
+and
+\begin{eqnarray}
+\lim_{n \to \infty} f(z_n) = \alpha
+\end{eqnarray}
+
+\end{enumerate}
+holds.\footnote{
 We sometimes write it as
 \begin{eqnarray}
 f(z_n) \to \alpha - 0.
 \end{eqnarray}
 }
-\begin{eqnarray}
-\lim_{n \to \infty} f(z_n) = \alpha.
-\end{eqnarray}
 
-\end{enumerate}
-holds.
-
-Let us construct a sequence $p: \mathbb{N} \to C_1$ in $C_1$ by if there is no upper limit, put $p_n$ s.t.
+Let us construct a sequence $p: \mathbb{N} \to C_1$ by, if there is no upper limit, put $p_n$ s.t.,
 \begin{eqnarray}
 f(p_n) > n,
 \end{eqnarray}
-else if $\alpha$ is the upper limit, put $p_n$ s.t.
+else if $\alpha$ is the upper limit, put $p_n$ s.t.,
 \begin{eqnarray}
 \alpha - \frac{1}{n} < f(p_n) < \alpha.
 \end{eqnarray}
@@ -286,7 +482,7 @@ Then we get a sequence\footnote{Here we have used the Axiom of choice.}
 p: \mathbb{N} \to C_1.
 \end{eqnarray}
 
-Next, consider the $\frac{1}{2} \times \frac{1}{2}$ squares determined by
+Next, consider four squares of $\frac{1}{2} \times \frac{1}{2}$, which are separated by two lines
 \begin{eqnarray}
 y = \frac{n}{2}, x = \frac{n}{2}.
 \end{eqnarray}
@@ -324,7 +520,7 @@ and its euclidean distance is smaller than
 \begin{eqnarray}
 \sqrt{2} \frac{1}{2^i}
 \end{eqnarray}
-of diagonal.
+of diagonal length of the $i$-th square.
 So, $q$ converges to a point in $C_1$
 \begin{eqnarray}
 \lim_{n\to \infty} q_n =: q_\infty \in C_1,
@@ -334,23 +530,24 @@ and since $f$ is continuous,
 f(q_\infty) = \lim_{n\to \infty} f(q_n).
 \end{eqnarray}
 
-If \ref{noUpperLimit}st (divergent) case holds, the right hand side is infinity,contradiction.
+If \ref{noUpperLimit}st (divergent) case holds, the right hand side is infinity, contradiction.
 Else \ref{upperLimit}nd (upper limit) case holds, the right hand side is $\alpha$, contradiction.
 
 Therefore, all function $f : C_1 \to \mathbb{R}$ has the maximum, and minimum.\\
 $\blacksquare$
 
 \subsection{The fundamental theorem in algebra}
-An arbitrary $\mathbb{C}$-coefficients $n$ degree polynomial
+Let $a_n \neq 0, \left. a_i\right|_i$ be $\mathbb{C}$.
+An arbitrary $\mathbb{C}$-coefficients degree $n>0$ polynomial
 \begin{eqnarray}
 \label{nDegreePolynomial}
-a_n * x^n + a_{n-1} * x^{n-1} + \cdots + a_0 = 0, a_n \neq 0, \left. a_i\right|_i \in \mathbb{C}
+a_n * x^n + a_{n-1} * x^{n-1} + \cdots + a_0 = 0%, a_n \neq 0, \left. a_i\right|_i \in \mathbb{C}
 \end{eqnarray}
 has a solution in $\mathbb{C}$.
 This means that $\mathbb{C}$ is algebraically closed.
 
 \subsubsection{Proof}
-Suppose there is no solution.
+We prove this theorem by contradiction; suppose there is no solution.
 Define
 \begin{eqnarray}
 F: \mathbb{C} \to \mathbb{R}
@@ -397,9 +594,9 @@ x \notin C_R \Rightarrow F(x) > F(0).
 \end{eqnarray}
 Therefore, if $F(x)$ has a minimum in $C_R$, this is indeed the minimum in $\mathbb{C}$.
 
-Above lemma in \S\ref{aLemmaForFundamentalTheoremInAlgebra} guarantees that $F(x)$ has a minimum in $C_R$, and $F(x)$ has the minimum in $\mathbb{C}$:
+Above lemma \S\ref{aLemmaForFundamentalTheoremInAlgebra} guarantees that $F(x)$ has a minimum in $C_R$, and $F(x)$ has the minimum in $\mathbb{C}$:
 \begin{eqnarray}
-\min \left. F(x) \right|_x = \alpha \geq 0.
+\alpha := \min \left. F(x) \right|_x.
 \end{eqnarray}
 Since this is not a solution for eq.(\ref{nDegreePolynomial}), $\alpha$ is positive definite.
 Now suppose $F$ has this minimum $\alpha>0$ at $p$:
@@ -415,7 +612,7 @@ Then $|g(x)|$ has its minimum $g(0) = \alpha$.
 Define $h(x)$ by 
 \begin{eqnarray}
 h(x)&:=& g(x)/\alpha\\ 
-&=& g(x) / (a_n p^n + a_{n-1} p^{n-1} + \cdots + a_0) \\
+%&=& g(x) / (a_n p^n + a_{n-1} p^{n-1} + \cdots + a_0) \\
 &=& 1 + b_1 x + \cdots b_n x^n.
 \end{eqnarray}
 Consider $b_1, \cdots, b_n$, and let
@@ -425,10 +622,10 @@ b_s
 be the first nonzero coefficient.
 Define
 \begin{eqnarray}
-K := \max \{ |b_{s+1}|, \cdots, |b_n| \}
+K := \max \{ |b_{s+1}|, \cdots, |b_n| \}.
 \end{eqnarray}
 
-We can find a small $r>0$ which satisfies both
+Now, we can find a small $r>0$ which satisfies both
 \begin{eqnarray}
 1 - |b_s| r^s > 0
 \end{eqnarray}
@@ -436,8 +633,9 @@ and
 \begin{eqnarray}
 0 < |b_s| r^s - \frac{K r^{s+1}}{1-r} < 1
 \end{eqnarray}
+for later arguments.
 
-If we write
+If we write in a polar coordinate
 \begin{eqnarray}
 b_s = |b_s| * e^{i \theta}
 \end{eqnarray}
@@ -466,196 +664,49 @@ F(q+p) < F(p) = \alpha,
 \end{eqnarray}
 but it contradicts that $\alpha$ is the minimum of $F$.\\
 $\blacksquare$
-minimality 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Numbers; recipes without arithmetics}
-Here we review $\mathbb{N, Z, Q, R},$ and $\mathbb{C}$.
-If the readers are already familiar with (ZFC axiomatic) set theory and the set theoretic implementation of $\mathbb{N, Z, Q, R},$ and $\mathbb{C}$, you can skip this section.
-
-\subsection{Natural numbers $\mathbb{N}$}
-Here is a recursive implementation of natural numbers (Peano):
+\subsection{Corollary}
+We can reduce
 \begin{eqnarray}
-0 &:=& \emptyset \\
-n+1 &:=& n \cup \{n\}
+a_n * x^n + a_{n-1} * x^{n-1} + \cdots + a_0
+=
+a_n * (x-s_1) * \cdots * (x-s_n).
 \end{eqnarray}
 
-\subsection{Integers $\mathbb{Z}$}
-The set of integers is complete under subtraction:
-\begin{eqnarray*}
-\mathbb{Z} := (\mathbb{N} \times \mathbb{N})/ S,
-\end{eqnarray*}
-where the equivalence relation $S$ is given by
+\subsubsection{Proof}
+Induction on the degree $n$.
+Base case; $n=1$:
 \begin{eqnarray}
-(m_1, m_2)S(n_1,n_2) :\Leftrightarrow m_1 + n_2 = m_2 + n_1.
+a_1*x +a_0 = a_1*\left(x - (-\frac{a_0}{a_1})\right).
 \end{eqnarray}
-I.e., a negative integer $(-m) \in \mathbb{Z}$ of some $m \in \mathbb{N}$ is represented by, for example,
+Induction step; let us assume $n-1$ case and consider
 \begin{eqnarray}
-(0,m).
+f(x) := a_n * x^n + a_{n-1} * x^{n-1} + \cdots + a_0, a_n \neq 0.
 \end{eqnarray}
-
-\subsection{Rational numbers $\mathbb{Q}$}
-The set of rational numbers is complete under non-zero division:
+Let $s$ be a solution for $f(x) =0$;
 \begin{eqnarray}
-\mathbb{Q} := \left(\mathbb{Z} \times (\mathbb{Z} - \{0\}) \right)/F,
+f(s) &=& a_n * x^n + a_{n-1} * x^{n-1} + \cdots + a_0 \\
+&=& 0.
 \end{eqnarray}
-where the equivalence relation $F$ is given by
+Then
 \begin{eqnarray}
-(a,b) F (c, d) : \Leftrightarrow a * d = b * c.
+f(x) &=& f(x) - f(s)\\
+&=& a_n * x^n + a_{n-1} * x^{n-1} + \cdots + a_0 - 0 \\
+&=& a_n * (x^n-s^n) + a_{n-1} * (x^{n-1}-x^{n-1}) + \cdots + a_1*(x-s) + 0 \qquad\qquad \\
+&=& a_n * (x-s) * h(x)
 \end{eqnarray}
-Usually we denote
-\begin{eqnarray}
-\frac{a}{b} := (a,b) \in \mathbb{Q}.
-\end{eqnarray}
-
-\subsection{Real numbers $\mathbb{R}$}
-The set of real numbers should satisfy the Axiom of continuity, but before state it, let us define an important tool, the cut.
-
-\subsubsection{Dedekind cut of $\mathbb{Q}$}
-A Dedekind cut is a pair of non-empty subsets of $\mathbb{Q}$
-\begin{eqnarray}
-(A_-, A_+) \in (2^\mathbb{Q}-\{\emptyset\})^2
-\end{eqnarray}
-with
-\begin{eqnarray}
-A_- \cup A_+ = \mathbb{Q}
-\end{eqnarray}
-and
-\begin{eqnarray}
-x \in A_-, y \in A_+ \Rightarrow x < y.
-\end{eqnarray}
-
-\subsubsection{Definition of $\mathbb{R}$}
-There are three possibilities
-\begin{eqnarray}
-\label{notExistsExists}
-\nexists \max A_-, \exists \min A_+ \\
-\label{existsNotExists}
-\exists \max A_-, \nexists \min A_+ \\
-\label{notExistsNotExists}
-\nexists \max A_-,  \nexists \min A_+ 
-\end{eqnarray}
-Here is a preliminary definition of $\mathbb{R}$:\footnote{
-Alternatively, we can define $\mathbb{R}$ be the set of all Dedekind cuts identifying eq.(\ref{notExistsExists}) and eq.(\ref{existsNotExists}).
-}
-\begin{eqnarray}
-\mathbb{R} := \left\{\left. (A_-, A_+) \right| \text{Dedekind cut with} (\ref{existsNotExists}), (\ref{notExistsNotExists})\right\}
-\end{eqnarray}
-
-We define a total order $\leq$ as follows.
-Let 
-\begin{eqnarray}
-\alpha := (A_-, A_+), \beta := (B_-, B_+) \in \mathbb{R}
-\end{eqnarray}
-then we define
-\begin{eqnarray}
-\alpha \leq \beta :\Leftrightarrow A_- \subset B_-.
-\end{eqnarray}
-
-\subsubsection{The Axiom of continuity}
-A cut of $\mathbb{R}$
-\begin{eqnarray}
-(A,B)
-\end{eqnarray}
-with
-\begin{eqnarray}
-A \cup B = \mathbb{R}
-\end{eqnarray}
-and
-\begin{eqnarray}
-x \in A, y \in B \Rightarrow x < y
-\end{eqnarray}
-satisfies either
-\begin{eqnarray}
-\exists \min A, \nexists \max B
-\end{eqnarray}
-or
-\begin{eqnarray}
-\nexists \min A, \exists \max B.
-\end{eqnarray}
-
-\subsubsection{Check}
-We prove that our $\mathbb{R}$ satisfies the Axiom of continuity.
-Let 
-\begin{eqnarray}
-\{\alpha_\lambda\}_{\lambda \in \Lambda}
-\end{eqnarray}
-be bounded subspaces of $\mathbb{R}$, and
-\begin{eqnarray}
-\alpha_\lambda := (A^\lambda_-, A^\lambda_+).
-\end{eqnarray}
-Now
-\begin{eqnarray}
-\alpha &:=& (A_-, A_+) \\
-A_- &:=& \bigcup_{\lambda \in \Lambda} A^\lambda_- \\
-A_+ &:=& \mathbb{Q} - A_-
-\end{eqnarray}
-is an upper bound of $\{\alpha_\lambda\}_{\lambda \in \Lambda}$, since $\forall \lambda \in \Lambda$,
-\begin{eqnarray}
-A^\lambda_- \subset A_- \Leftrightarrow \alpha_\lambda \leq \alpha
-\end{eqnarray}
-by definition.
-
-Indeed this $\alpha$ is the minimum of upper bound of $\{\alpha_\lambda\}_{\lambda \in \Lambda}$, i.e., the supremum: if 
-\begin{eqnarray}
-\beta := (B^\lambda_-, B^\lambda_+)
-\end{eqnarray}
-is another upper bound of $\{\alpha_\lambda\}_{\lambda \in \Lambda}$, then 
-\begin{eqnarray}
-\forall \lambda \in \Lambda, A^\lambda_- \subset B.
-\end{eqnarray}
-This means
-\begin{eqnarray}
-A_- \subset B_- \Leftrightarrow \alpha \leq \beta.
-\end{eqnarray}
-Therefore, if $(A,B)$ is a cut of $\mathbb{R}$, then $A \subset \mathbb{R}$ has the supremum $\alpha \in \mathbb{R}$:
-\begin{eqnarray}
-\alpha := \sup A \in \mathbb{R}.
-\end{eqnarray}
-
-Finally we show that either $\alpha = \max A$ or $\alpha = \max B$.
-If $\alpha \neq \max A$, then
-\begin{eqnarray}
-\alpha \in B.
-\end{eqnarray}
-By definition, $\forall \beta \in B$ is an upper bound of $\alpha$:
-\begin{eqnarray}
-\alpha \leq \beta,
-\end{eqnarray}
-that is
-\begin{eqnarray}
-\alpha = \min B.
-\end{eqnarray}
+where $h(x)$ has degree at most $(n-1)$, and its highest coefficient is one (1).\\
 $\blacksquare$
-
-\subsection{Complex numbers $\mathbb{C}$}
-Let us define
-\begin{eqnarray}
-\mathbb{C} := (\mathbb{R}\times \mathbb{R}, +, *),
-\end{eqnarray}
-where
-\begin{eqnarray}
-(a,b) + (c,d) &:=& (a+c, b+d) \\
-(a,b) * (c,d) &:=& (a*c - b* d, a*d + b*c).
-\end{eqnarray}
-Note that
-\begin{eqnarray}
-(0,1) * (0,1) := (-1,0).
-\end{eqnarray}
-Usually we denote
-\begin{eqnarray}
-a + ib := (a,b) \in \mathbb{C}.
-\end{eqnarray}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Geometry, Algebra, and algorithms}
-Let $\mathbb{K}$ be an arbitrary fields.
+Let $\mathbb{K}$ be an arbitrary fields, and $\forall x_1, \cdots, x_n \in \mathbb{K}$.
 We will treat polynomial ring in $n$ variables $(x_1, \cdots, x_n)$ with  $\mathbb{K}$ coefficients:\footnote{ We will define this set in eq.(\ref{polynomialRing}).}
 \begin{eqnarray}
 \mathbb{K}[x_1,\cdots,x_n].
 \end{eqnarray}
-We will introduce affine varieties, which are sets defined by polynomial equations.
+We will introduce affine varieties, which are solution sets defined by polynomial equations.
 
 \section{Polynomials and Affine space}
 \subsection{Monomials}
@@ -689,7 +740,7 @@ A polynomial $f(x) = f(x_1, \cdots, x_n)$ is a finite linear combination of mono
 \begin{eqnarray}
 f(x) = \sum_\alpha c_\alpha * x^\alpha,
 \end{eqnarray}
-where $\forall c_\alpha \in \mathbb{K}$ is called coefficient of monomial $x^\alpha$.
+where $c_\alpha \in \mathbb{K}$ is called coefficient of monomial $x^\alpha$.
 
 For nonzero coefficient $c_\alpha \neq 0$,
 \begin{eqnarray}
@@ -704,11 +755,7 @@ We write
 \label{polynomialRing}
 \mathbb{K}[x_1,\cdots,x_n] := \left\{\left. f(x) = \sum_\alpha c_\alpha * x^\alpha \right| \forall c_\alpha \in \mathbb{K} \right\}
 \end{eqnarray}
-%Every element of $\mathbb{K}[x_1,\cdots,x_n]$ determine a function: $\forall f(x) \in \mathbb{K}[x_1,\cdots,x_n]$,
-%\begin{eqnarray}
-%f(x) = \sum_\alpha c_\alpha * x^\alpha : \mathbb{K}^n \to \mathbb{K}; a \mapsto \sum_\alpha c_\alpha * a^\alpha
-%\end{eqnarray}
-%by replacing every $x_i$ by $a_i$.
+as a set of all polynomial in $n$ variables $(x_1, \cdots, x_n)$ with  $\mathbb{K}$ coefficients.
 
 \subsection{Affine spaces}
 Let $\mathbb{K}$ be a field and $n \in \mathbb{N}$.
@@ -733,7 +780,7 @@ a:=(a_1, \cdots, a_n) \stackrel{f}{\mapsto} f(a) := \sum_\alpha c_\alpha * a^\al
 That is, the function $f$ replace every $x_i$ by $a_i$ in the expression for $f(x)$.
 
 \section{Affine Varieties}
-Affine varieties are higher curves and higher surfaces defined by polynomial equations.
+Affine varieties are curves, surfaces, and their higher dimensional generalizations defined by polynomial equations.
 
 \subsection{Definition of affine varieties}
 \label{DefOfAV}
@@ -749,7 +796,7 @@ Thus, an affine variety $\mathbb{V}(f_1, \cdots, f_s)$ is the set of all solutio
 f_1(x) =0, \cdots, f_s(x) =0.
 \end{eqnarray}
 
-\subsection{Intersection and union of varieties}
+\subsection{Intersection and union of varieties (Lemma 2 \S1.2)}
 \label{intersectionAndUnionOfVarieties}
 Let $V, W \subset \mathbb{K}^n$ be 
 \begin{eqnarray}
@@ -757,7 +804,7 @@ V &:=& \mathbb{V}(f_1, \cdots, f_s)\\
 W &:=& \mathbb{V}(g_1, \cdots, g_t)
 \end{eqnarray}
 of varieties.
-Then
+Then $V \cap W$ and $V \cup W$ are also affine varieties, and indeed
 \begin{eqnarray}
 V \cap W &=& \mathbb{V}(f_1, \cdots, f_s, g_1, \cdots, g_t) \\
 V \cup W &=& \mathbb{V}\left( \left. f_i * g_j \right| 1 \leq i \leq s, 1 \leq j \leq t \right) 
@@ -769,7 +816,8 @@ V \cup W &=& \mathbb{V}\left( \left. f_i * g_j \right| 1 \leq i \leq s, 1 \leq j
 \item $(V \cap W)$
 The 1st equation holds since
 \begin{eqnarray}
-a \in V \cap W \Leftrightarrow f(a) = 0 \text{ and } g(a) = 0 \Leftrightarrow a \in \mathbb{V}(f_1, \cdots, g_t).
+a \in V \cap W &\Leftrightarrow& f(a) = 0 \text{ and } g(a) = 0 \\
+&\Leftrightarrow& a \in \mathbb{V}(f_1, \cdots, g_t).
 \end{eqnarray}
 
 \item $(V \cup W)$
@@ -790,7 +838,7 @@ and
 \begin{eqnarray}
 V \subset \mathbb{V}\left( \left. f_i * g_j \right| 1 \leq i \leq s, 1 \leq j \leq t \right).
 \end{eqnarray}
-This implies
+Similarly, $W \subset \mathbb{V}\left( \left. f_i * g_j \right| 1 \leq i \leq s, 1 \leq j \leq t \right)$ and these imply that
 \begin{eqnarray}
 V \cup W \subset \mathbb{V}\left( \left. f_i * g_j \right| 1 \leq i \leq s, 1 \leq j \leq t \right).
 \end{eqnarray}
@@ -798,6 +846,7 @@ V \cup W \subset \mathbb{V}\left( \left. f_i * g_j \right| 1 \leq i \leq s, 1 \l
 For $\supset$-direction.
 Take
 \begin{eqnarray}
+\label{aInProductOfVarieties}
 a \in \mathbb{V}\left( \left. f_i * g_j \right| 1 \leq i \leq s, 1 \leq j \leq t \right).
 \end{eqnarray}
 If $a \in V$ then
@@ -805,19 +854,19 @@ If $a \in V$ then
 a \in V \subset V \cup W
 \end{eqnarray}
 and done.
-If $a \not\in V$, then there exists some $i_0$ s.t.
+If $a \not\in V$, then there exists some $i_0$ s.t.,
 \begin{eqnarray}
 f_{i_0}(a) \neq 0.
 \end{eqnarray}
-However, $\forall i,j$,
+However, from eq.(\ref{aInProductOfVarieties}), 
 \begin{eqnarray}
-f_i(a) * g_j(a) = 0
+\forall i,j, f_i(a) * g_j(a) = 0
 \end{eqnarray}
-implies
+and we get
 \begin{eqnarray}
-g_j(a) = 0, \forall j,
+\forall j, g_j(a) = 0.
 \end{eqnarray}
-and $a \in W$.
+This means $a \in W$.
 Therefore
 \begin{eqnarray}
 a \in W \subset V \cup W.
@@ -837,10 +886,15 @@ A rational function in $(x_1,\cdots,x_n)$ with $\mathbb{K}$ coefficients is a qu
 f/g : \mathbb{K}^n \to \mathbb{K}; a \mapsto \frac{f(a)}{g(a)}.
 \end{eqnarray}
 
-The equality is given by
+The equality is given
 \begin{eqnarray}
 f/g = h/k &:\Leftrightarrow& k*f = g*h \\
 &\Leftrightarrow& k(x)*f(x) = g(x)*h(x), \forall x \in \mathbb{K}.
+\end{eqnarray}
+in $\mathbb{K}[x_1, \cdots, x_n]$.
+The set of all ration function in $x_1, \cdots, x_n$ is denoted
+\begin{eqnarray}
+\mathbb{K}(x_1, \cdots, x_n).
 \end{eqnarray}
 
 \section{Ideals}
@@ -859,6 +913,179 @@ A set of polynomials generate an ideal:
 \left< f_1, \cdots, f_s \right> := \left\{ \left. \sum_i h_i(x) * f_i(x) \right| h_i \in \mathbb{K}[x_1,\cdots,x_n] \right\}
 \end{eqnarray}
 We call it an ideal generated by $f(x)$'s.
+
+\subsubsection{Check}
+$\left< f_1, \cdots, f_s \right> $ is indeed an ideal.
+\begin{enumerate}
+\item 0
+\begin{eqnarray}
+0 = \sum_i 0 * f_i(x) \in \left< f_1, \cdots, f_s \right>.
+\end{eqnarray}
+
+\item sum
+\begin{eqnarray}
+g_1(x) + g_2(x) &=& \sum_i g_{1i}(x) * f_i(x) + \sum_i g_{2i}(x) * f_i(x) \\
+&=& \sum_i (g_{1i}(x) + g_{2i}(x)) * f_i(x) \\
+&& \in \left< f_1, \cdots, f_s \right>.
+\end{eqnarray}
+
+\item 
+\begin{eqnarray}
+h(x) * \sum_i g_{i}(x) * f_i(x) &=& \sum_i \left( h(x) *g_{i}(x) \right) * f_i(x) \\
+&& \in \left< f_1, \cdots, f_s \right>.
+\end{eqnarray}
+
+\end{enumerate}
+$\blacksquare$
+
+\subsection{(Proposition 4 \S1.4)}
+\begin{eqnarray}
+\left< f_1, \cdots, f_s \right> = \left< g_1, \cdots, g_t \right> \Rightarrow \mathbb{V}(f_1, \cdots, f_s) = \mathbb{V}(g_1, \cdots, g_t).
+\end{eqnarray}
+
+\subsubsection{Proof}
+It suffices to show $\mathbb{V}(f) \subset \mathbb{V}(g)$.
+By definition, for each $g_i(x)$, $\exists M_{ij}(x) \in \mathbb{K}[x_1,\cdots,x_n]$ s.t.
+\begin{eqnarray}
+g_i(x) = \sum_j M_{ij}(x) * f_j(x).
+\end{eqnarray}
+So, if $a \in \mathbb{V}(f)$, then
+\begin{eqnarray}
+g_i(a) = \sum_j M_{ij}(a) * f_j(a) = 0.
+\end{eqnarray}
+Therefore $a \in \mathbb{V}(g)$.\\
+$\blacksquare$
+
+\subsection{Definition}
+For an arbitrary variety $V \subset \mathbb{K}^n$, define
+\begin{eqnarray}
+\mathbb{I}(V) := \left\{\left. f(x) \in \mathbb{K}[x_1,\cdots,x_n] \right| \forall a \in V, f(a) = 0 \right\}
+\end{eqnarray}
+
+\subsection{(Lemma 6 \S1.4)}
+$\mathbb{I}(V)$ is an ideal.
+
+\subsubsection{Proof}
+\begin{enumerate}
+\item 0
+By definition, 0 of zero polynomial is in $\mathbb{I}(V)$
+
+\item sum
+If $f(x), g(x) \in \mathbb{I}(V)$, then the sum
+\begin{eqnarray}
+(f + g)(x) := f(x) + g(x)
+\end{eqnarray}
+satisfies
+\begin{eqnarray}
+\forall a \in V, (f + g)(a) = f(a) + g(a) = 0.
+\end{eqnarray}
+
+\item
+For an arbitrary polynomial $h(x) \in \mathbb{K}[x_1,\cdots,x_n]$ and $f(x) \in \mathbb{I}(V)$,
+\begin{eqnarray}
+\forall a \in V, (h*f)(a) = h(a) * f(a) = 0
+\end{eqnarray}
+
+\end{enumerate}
+$\blacksquare$
+
+\subsection{Lemma 7 \S1.4}
+\begin{eqnarray}
+\left< f_1, \cdots, f_s \right> \subsetneq \mathbb{I}\left( \mathbb{V} \left( f_1, \cdots, f_s \right) \right)
+\end{eqnarray}
+
+\subsubsection{Proof}
+$(\subset)$; $\forall f(x) \in \left< f_1, \cdots, f_s \right>, \exists h_i(x) \in \mathbb{K}[x_1,\cdots,x_n]$, s.t.,
+\begin{eqnarray}
+f(x) = \sum_{i=1}^s h_i(x) * f_i(x)
+\end{eqnarray}
+Therefore, $\forall a \in \mathbb{V} \left( f_1, \cdots, f_s \right)$,
+\begin{eqnarray}
+f(a) = \sum_{i=1}^s h_i(x) * f_i(a) = 0
+\end{eqnarray}
+and $f(x) \in \mathbb{I}\left( \mathbb{V} \left( f_1, \cdots, f_s \right) \right)$.
+
+(Counter example for the equality)
+Consider
+\begin{eqnarray}
+\left< x^2, y^2 \right>
+\end{eqnarray}
+and 
+\begin{eqnarray}
+\mathbb{I}\left( \mathbb{V} \left( x^2, y^2 \right) \right).
+\end{eqnarray}
+The equations
+\begin{eqnarray}
+x^2 = 0 = y^2
+\end{eqnarray}
+imply
+\begin{eqnarray}
+x = 0 = y
+\end{eqnarray}
+i.e.,
+\begin{eqnarray}
+\mathbb{V} \left( x^2, y^2 \right) = \{(0,0)\}
+\end{eqnarray}
+However we also have
+\begin{eqnarray}
+\mathbb{V} \left( x, y \right) = \{(0,0)\} \Rightarrow \mathbb{I}\left( \mathbb{V} \left( x^2, y^2 \right) \right) = \left< x, y \right>.
+\end{eqnarray}
+The fact
+\begin{eqnarray}
+x \neq \left< x^2, y^2 \right>
+\end{eqnarray}
+indicates that
+\begin{eqnarray}
+\left< x^2, y^2 \right> \neq \mathbb{I}\left( \mathbb{V} \left( x^2, y^2 \right) \right).
+\end{eqnarray}
+$\blacksquare$
+
+\subsection{Proposition 8 \S1.4}
+\begin{eqnarray}
+V \subset W \Leftrightarrow \mathbb{I}(V) \supset \mathbb{I}(W).
+\end{eqnarray}
+
+\subsubsection{Proof}
+$(\Rightarrow)$ Since any polynomial vanishing on $W$ must vanish on $V$,
+\begin{eqnarray}
+f(x) \in \mathbb{I}(V) \Rightarrow f(x) \in \mathbb{I}(W).
+\end{eqnarray}
+
+$(\Leftarrow)$
+If
+\begin{eqnarray}
+f(x) \in \mathbb{I}(V) \Rightarrow f(x) \in \mathbb{I}(W),
+\end{eqnarray}
+i.e., 
+\begin{eqnarray}
+\forall a \in W, f(a)=0 \Rightarrow \forall b \in V, f(b) = 0,
+\end{eqnarray}
+then we have
+\begin{eqnarray}
+V \subset W.
+\end{eqnarray}
+$\blacksquare$
+
+\subsection{Radical ideals (Exercise 8 \S 1.4)}
+An ideal $I \subset \mathbb{K}[x_1,\cdots,x_n]$ is radical iff
+\begin{eqnarray}
+f(x) \in I \Leftrightarrow \exists m \text{ s.t. } \left( f(x) \right)^m \in I.
+\end{eqnarray}
+$\mathbb{I}(V)$ is a radical ideal.
+
+\subsubsection{Proof}
+Since
+\begin{eqnarray}
+f(a) = 0
+\end{eqnarray}
+iff
+\begin{eqnarray}
+\left( f(a)  \right)^m  = 0
+\end{eqnarray}
+for some $m$.\\
+$\blacksquare$
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Polynomials of One(1) Variable}
 Consider univariate polynomials
@@ -1172,7 +1399,7 @@ that is, iff $f(x)$ is divisible by $g(x)$ (so $r=0$).
 
 \subsection{Every ideal of $\mathbb{K}[x]$ is generated by one polynomial}
 \label{InOneDimension}
-$\forall$ideal of $\mathbb{K}[x]$ over a field $\mathbb{K}$ can be written in the form $\left< f\right>$.
+Every ideal of $\mathbb{K}[x]$ over a field $\mathbb{K}$ can be written in the form $\left< f\right>$.
 
 \subsubsection{Proof}
 Take an ideal $I \subset \mathbb{K}[x]$.
@@ -1212,6 +1439,7 @@ $\blacksquare$
 
 \subsubsection{Principal ideal domain (PID)}
 In general, an ideal generated by one element is called a principal ideal.
+We call the univariate polynomial ring $\mathbb{K}[x]$ a principal ideal domain.
 
 \subsection{Corollary}
 \label{atMostDeg}
@@ -1241,12 +1469,12 @@ Since $\deg(q)$ is $m-1$, and has at most $m-1$ root in $\mathbb{K}$.
 Therefore, $f(x)=0$ has at most $m$ root.\\
 $\blacksquare$
 
-\subsection{Zero function on an infinite field}
+\subsection{Zero function on an infinite field (Proposition 5 \S1.1)}
 Consider an infinite field $\mathbb{K}$ and $f(x) \in \mathbb{K}[x_1, \cdots, x_n]$.
-Then $f = 0$ in $f \in \mathbb{K}[x_1, \cdots, x_n]$ iff $f(x) : \mathbb{K}^n \to \mathbb{K}$ is the zero function.
+Then $f(x) = 0$ in $\mathbb{K}[x_1, \cdots, x_n]$, i.e., zero polynomial iff $f : \mathbb{K}^n \to \mathbb{K}$ is the zero function.
 
 \subsubsection{Proof}
-$(\Rightarrow)$ part is obvious, since if $f(x)$ is the zero polynomial, i.e., all the coefficients are zero, then $f(x)$ gives zero function:
+$(\Rightarrow)$ part is obvious, since if $f(x)$ is the zero polynomial, i.e., all the coefficients are zero, then the zero polynomial $f(x)$ gives zero function:
 \begin{eqnarray}
 f : \mathbb{K}^n \to \mathbb{K}; \forall a \mapsto 0.
 \end{eqnarray}
@@ -1285,16 +1513,21 @@ as a polynomial only of $x_n$.
 Since $f(x)$ is zero for every $x_n$, $f(x)$ is the zero polynomial of $x_n$.
 This means the "coefficients" are zero
 \begin{eqnarray}
-g_i (a_1, \cdots, a_{n-1}) = 0.
+g_i (a_1, \cdots, a_{n-1}) = 0, \forall i.
 \end{eqnarray}
 However, our choice of $(a_1, \cdots, a_{n-1})$ is arbitrary and this means every $g_i(x)$ is zero polynomial in $\mathbb{K}[x_1, \cdots, x_{n-1}]$.
-From the induction hypothesis, $g_i = 0$, and
+From the induction hypothesis, $g_i (a_1, \cdots, a_{n-1}) = 0$, and
 \begin{eqnarray}
-f = 0.
+f(x) = 0
 \end{eqnarray}
+i.e., the zero polynomial.\\
 \end{enumerate}
 
 $\blacksquare$
+
+\subsection{Corollary 6 \S1.1}
+Let $\mathbb{K}$ be an infinite field, and $f(x), g(x) \in  \mathbb{K}[x_1, \cdots, x_n]$.
+Then $f(x) = g(x)$. in $ \mathbb{K}[x_1, \cdots, x_n]$ iff $f,g : \mathbb{K}^n \to \mathbb{K}$ are the same functions. 
 
 %\subsection{Properties of GCD}
 %Let $f,g \in \mathbb{K}[x]$, then
@@ -1312,6 +1545,7 @@ A greatest common divisor of $f(x),g(x) \in \mathbb{K}[x]$ is a polynomial $h(x)
 f(x) &\sqsupseteq& h(x) \\
 g(x) &\sqsupseteq& h(x) 
 \end{eqnarray}
+i.e., "common."
 
 \item If $h'(x) \in \mathbb{K}[x]$ satisfies
 \begin{eqnarray}
@@ -1322,7 +1556,7 @@ then
 \begin{eqnarray}
 h(x) \sqsupseteq h'(x) 
 \end{eqnarray}
-i.e., "greatest".
+i.e., "greatest."
 
 \end{enumerate}
 
@@ -1439,7 +1673,7 @@ From the division algorithm, observe
 \begin{eqnarray}
 \deg\left( s_0(x) \right) > \deg\left( s_1(x) \right) > \cdots,
 \end{eqnarray}
-i.e., $\left\{ \deg\left( s_n(x) \right) \right\}_n$ is strictly decreasing sequence.
+i.e., $\left\{ \deg\left( s_n(x) \right) \right\}_n$ is strictly decreasing, non-negative sequence.
 Since our termination condition is $\deg\left( s_n(x) \right)=0$, this algorithm will stop at finite steps.
 
 If we put
@@ -1469,7 +1703,7 @@ So
 \end{eqnarray}
 $\blacksquare$
 
-\subsection{B\"ezout lemma}
+\subsection{B\"ezout's identity (Exercise 4 \S1.5)}
 \label{BezoutLemma}
 For arbitrary polynomials $f(x), g(x) \in \mathbb{K}[x]$, there are $a(x), b(x) \in \mathbb{K}[x]$ s.t.
 \begin{eqnarray}
@@ -1520,8 +1754,10 @@ If we assume this is the case for $0,1, \cdots, n(\geq 1)$, then
 \begin{eqnarray}
 r_{n+1}(x)
 &:=& r_{n-1}(x) - q_n(x) * r_{n}(x) \\
-&=& s_{n-1}(x) * f(x) + t_{n-1}(x) * g(x) - q_n(x) * \left( s_n(x) * f(x) + t_n(x) * g(x) \right) \qquad \qquad \\
-&=& \left( s_{n-1}(x) + q_n(x) * s_n(x) \right) * f(x) + \left( s_{n-1}(x) + q_n(x) * s_n(x) \right) * g(x) \\
+\nonumber &=& s_{n-1}(x) * f(x) + t_{n-1}(x) * g(x) \\
+&&- q_n(x) * \left( s_n(x) * f(x) + t_n(x) * g(x) \right) \qquad \qquad \\
+\nonumber &=& \left( s_{n-1}(x) + q_n(x) * s_n(x) \right) * f(x) \\
+&&+ \left( s_{n-1}(x) + q_n(x) * s_n(x) \right) * g(x) \\
 &=& s_{n+1}(x) * f(x) + t_{n+1}(x) * g(x)
 \end{eqnarray}
 
