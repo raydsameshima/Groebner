@@ -2428,11 +2428,12 @@ Since, $\forall x^\alpha * y^p \in I$, if $p \geq m, \exists x^{\alpha(i)} * y^m
 \begin{eqnarray}
 x^\alpha * y^p  \sqsupseteq x^{\alpha(i)} * y^m,
 \end{eqnarray}
-by construction, else (i.e., $0 \leq p \leq m-1$),
+by construction $J := \left\{ \left. x^\alpha \in \mathbb{K}[x_1, \cdots, x_{n-1}] \right| \exists m \in \mathbb{N} \text{ s.t. } x^\alpha y^m \in I \right\}$, else (i.e., $0 \leq p \leq m-1$),
 \begin{eqnarray}
 x^\alpha y^p  \sqsupseteq \exists x^{\alpha_p(j)} y^p \in J_p.
 \end{eqnarray}
-(In both case, $y$ part is done, and $x$ part is from the inductive hypothesis.)
+by construction $J_j := \left\{ \left. x^\beta \in \mathbb{K}[x_1, \cdots, x_{n-1}] \right| x^\beta * y^j \in I \right\}$.
+(In both case, $y$ part is done by construction, and $x$ part is from the inductive hypothesis.)
 
 Let us prove $\left< \tilde{J} \right> = I$.
 Since $\forall f \in I$ of monomial ideal is written as the finite sum of monomials with appropriate factors:
@@ -2721,13 +2722,13 @@ By definition, the leading term of $f_1$ is
 \begin{eqnarray}
 LT(f_1) \in \left< LT(I) \right>.
 \end{eqnarray}
-This means $\forall$ generators of the ideal $\left< LT(f_1), \cdots, LT(f_s) \right>$ is in $\left< LT(I) \right>$, and
+This means each generator of the ideal $\left< LT(f_1), \cdots, LT(f_s) \right>$ is in $\left< LT(I) \right>$, and
 \begin{eqnarray}
 \left< LT(f_1), \cdots, LT(f_s) \right> \subset \left< LT(I) \right>
 \end{eqnarray}
 $\blacksquare$
 
-\subsubsection{Example}
+\subsubsection{(Example 2 \S2.5)}
 $\left< LT(I) \right>$ can be strictly larger than $\left< LT(f_1), \cdots, LT(f_s) \right>$.
 
 Consider
@@ -2765,7 +2766,7 @@ This example shows that
 \end{eqnarray}
 $\blacksquare$
 
-\subsection{$\left< LT(I) \right>$ is a monomial ideal, and finitely generated}
+\subsection{$\left< LT(I) \right>$ is a monomial ideal, and finitely generated (Proposition 3 \S2.5)}
 \label{monomialIdeals}
 $\forall I \subset \mathbb{K}[x_1, \cdots, x_{n}]$ be an ideal, then
 \begin{eqnarray}
@@ -2798,7 +2799,7 @@ but since $g$'s are monomials
 \end{eqnarray}
 $\blacksquare$
 
-\subsection{Hilbert Basis Theorem}
+\subsection{Hilbert Basis Theorem (Theorem 4 \S2.5)}
 \label{HilbertBasisTheorem}
 Every ideal $I \subset \mathbb{K}[x_1, \cdots, x_{n}]$ has finite generators.
 
@@ -2885,7 +2886,7 @@ Informally, a set $G := \{g_1, \cdots, g_t\} \subset I$ of generators is a Gr\"o
 
 % \subsubsection{Proof}
 
-\subsection{Every nontrivial ideal has a Gr\"obner basis}
+\subsection{Every nontrivial ideal has a Gr\"obner basis (Corollary 6 \S2.3)}
 The proof of Hilbert Basis Theorem in \S\ref{HilbertBasisTheorem} also establishes the following result.
 
 Fix a monomial order $>$.
@@ -2907,7 +2908,7 @@ This Hilbert basis has the following property:
 This is indeed the condition for being a Gr\"obner basis.\\
 $\blacksquare$
 
-\subsection{The Ascending Chain Condition}
+\subsection{The Ascending Chain Condition (Theorem 7 \S2.5)}
 \label{ACC}
 Let
 \begin{eqnarray}
@@ -2965,7 +2966,7 @@ m := \left. \max j_i \right|_i
 \end{eqnarray}
 for $1 \leq i \leq s$, and then
 \begin{eqnarray}
-I = \left<f_1, \cdots, f_s \right> \subset I_m \subset I_{m+1} \subset \cdots \subset I.
+I = \left<f_1, \cdots, f_s \right> \subset I_m \subset I_{m+1} \subset \cdots 
 \end{eqnarray}
 As a result, the ascending chain stabilizes with $I_m$ and 
 \begin{eqnarray}
@@ -2991,13 +2992,13 @@ The affine variety $\mathbb{V}(I)$ of the ideal $I$ is defined by
 \mathbb{V}(I) := \left\{ \left. a \in \mathbb{K}^n \right| \forall f \in I, f(a) = 0\right\}.
 \end{eqnarray}
 
-\subsection{Varieties of ideals is well-defined}
+\subsection{Varieties of ideals is well-defined (Proposition 9 \S2.5)}
 Let $\mathbb{V}(I)$ be an affine variety of an ideal $I$.
 Then, there is a finite generating set and
 \begin{eqnarray}
 \mathbb{V}(I) = \mathbb{V}(f_1, \cdots, f_s)
 \end{eqnarray}
-holds.\footnote{The left hand side is defined in \S\ref{DefOfAV}.}
+holds.\footnote{The right hand side is defined in \S\ref{DefOfAV}.}
 So, the varieties of ideals are well defined.
 
 \subsubsection{Proof}
@@ -3035,7 +3036,6 @@ This means that $a \in \mathbb{V}(I)$ and
 \begin{eqnarray}
 \mathbb{V}(I) \supset \mathbb{V}(f_1, \cdots, f_s)
 \end{eqnarray}
-
 Therefore we have
 \begin{eqnarray}
 \mathbb{V}(I) = \mathbb{V}(f_1, \cdots, f_s)
@@ -3043,7 +3043,7 @@ Therefore we have
 $\blacksquare$
 
 \section{Properties of Gr\"obner Bases}
-From this section, we will omit $*$ symbol to indicate the multiplication.
+From this section, we omit $*$ symbol to indicate the multiplication.
 
 \subsection{Unique reminder properties}
 \label{UniqueReminderProperties}
