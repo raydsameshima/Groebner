@@ -2324,27 +2324,30 @@ i.e., $x^\beta$ is divisible by some $x^\alpha \in I$.
 
 \subsubsection{Proof}
 ($\Leftarrow$)
-If $x^\beta \sqsupseteq x^\alpha$, then there is some $h \in \mathbb{K}[x_1, \cdots, x_n]$ s.t.,
+If $x^\beta \sqsupseteq x^\alpha$, then there is some $h(x) \in \mathbb{K}[x_1, \cdots, x_n]$ s.t.,
 \begin{eqnarray}
-x^\beta = h * x^\alpha.
+x^\beta = h(x) * x^\alpha.
 \end{eqnarray}
 So clearly $x^\beta \in I$ by the definition of ideal.
 
 ($\Rightarrow$)
 Conversely, if $x^\beta \in I$, then we have an expression for $x^\beta$:
 \begin{eqnarray}
-x^\beta = \sum_{i=1}^s h_i * x^{\alpha(i)}
+x^\beta = \sum_{i=1}^s h_i(x) * x^{\alpha(i)}
 \end{eqnarray}
-
-Now our generating set
+When we expand each $h_i(x)$ in the finite sum of terms, we get
 \begin{eqnarray}
-\left\{x^{\alpha(1)}, \cdots, x^{\alpha(s)} \right\}
+x^\beta = \sum_{i=1}^s \sum_{j=1}^t h_{i \gamma(j)} x^{\gamma(j)} * x^{\alpha(i)}
 \end{eqnarray}
-is finite by definition of monomial ideals.
-From the well-ordered property of our monomial order, this generating set has the minimum element.
-Without loss of generality, we can put $\alpha(1)$ is the minimum\footnote{Indeed, we can put this generating set as $\left\{x^{\alpha(1)}< \cdots < x^{\alpha(s)} \right\}$.} and $h_1 \neq 0$, then
+where $h_{i \gamma(j)} \in \mathbb{K}$.
+Since the left hand side is a monomial, there are $i_\beta, j_\beta$ s.t.
 \begin{eqnarray}
-x^\beta \sqsupseteq x^{\alpha(1)}.
+\gamma(j_\beta) + \alpha(i_\beta) = \beta,  h_{i_\beta \gamma(j_\beta)} = 1 \\
+h_{i \gamma(j)} = 0, i \neq i_\beta, j \neq j_\beta.
+\end{eqnarray}
+So
+\begin{eqnarray}
+x^\beta = x^{\gamma(j_\beta)} * x^{\alpha(i_\beta)}
 \end{eqnarray}
 $\blacksquare$
 
@@ -2359,15 +2362,16 @@ where $x^{\alpha(1)}, \cdots, x^{\alpha(s)} \in A$.
 That is, every monomial ideal has a finite number of monomial generators.
 
 \subsubsection{Proof}
-By induction on $n$.\footnote{Here we uses the well-ordering property of $\mathbb{N}$.}
+By induction on $n$.%\footnote{Here we uses the well-ordering property of $\mathbb{N}$.}
 
 $n=1$ case, $I = \left<\left. x_1^{\alpha(1)} \right| {\alpha(1)} \in A \subset \mathbb{N} \right>$.
 Then just take the smallest $\beta \in A$ and 
 \begin{eqnarray}
 I = \left< x_1^\beta \right>.
 \end{eqnarray}
+(See also \S\ref{InOneDimension}).
 
-Now assume that $n>1$ and this theorem holds for up to $n-1$.
+Now assume $n>1$ and this theorem holds for up to $n-1$.
 Consider the following form of monomial
 \begin{eqnarray}
 x^\alpha * y^m \in \mathbb{K}[x_1, \cdots, x_{n-1},y],
@@ -2376,7 +2380,7 @@ where
 \begin{eqnarray}
 \alpha \in \mathbb{N}^{n-1}, m \in \mathbb{N}.
 \end{eqnarray}
-and a monomial ideal
+and an arbitrary monomial ideal
 \begin{eqnarray}
 I \subset \mathbb{K}[x_1, \cdots, x_{n-1},y].
 \end{eqnarray}
@@ -2467,14 +2471,14 @@ Assume $(\mathbb{N}^n, >)$ be well-ordering, then we can pick a minimum element:
 \begin{eqnarray}
 \alpha_0 \in \mathbb{N}^n \text{ s.t. } \forall \alpha \in \mathbb{N}^n, \alpha_0 \leq \alpha
 \end{eqnarray}
-It suffices to show that $0 \geq \alpha_0$; if $0 > \alpha_0$ were true, using the second assumption,
+It suffices to show that $\alpha_0 \geq 0$; if $\alpha_0 < 0$ were true, using the second assumption,
 \begin{eqnarray}
 \alpha_0 = 0 + \alpha_0 > \alpha_0 + \alpha_0 = 2\alpha_0
 \end{eqnarray}
 i.e., $2\alpha_0$ became smaller than the minimum $\alpha_0$, contradiction.
 So,
 \begin{eqnarray}
-0 \leq \alpha_0.
+\alpha_0 \geq 0.
 \end{eqnarray}
 
 ($\Leftarrow$)
@@ -2578,7 +2582,7 @@ x^\alpha = x_1^{\alpha_1} * \cdots * x_n^{\alpha_n} \to [\alpha_1, \cdots, \alph
 \end{verbatim}
 
 \paragraph{$>_{lex}$ is a monomial ordering}
-Since the number of variables is finite ($n$ in $\mathbb{K}[x_1, \cdots, x_n]$), the above algorithm will terminate, i.e., all two monomials $\alpha, \beta$ are in one of
+Since the number of variables is finite ($n$ in $\mathbb{K}[x_1, \cdots, x_n]$) and the comparison procedure is basically that of $\mathbb{N}$, the above algorithm will terminate, i.e., all two monomials $\alpha, \beta$ are in one of
 \begin{eqnarray}
 \alpha >_{lex} \beta, \alpha = \beta, \beta >_{lex} \alpha.
 \end{eqnarray}
@@ -2796,10 +2800,10 @@ $\blacksquare$
 
 \subsection{Hilbert Basis Theorem}
 \label{HilbertBasisTheorem}
-Every ideal $I \subset \mathbb{K}[x_1, \cdots, x_{n}]$ has a finite generators.
+Every ideal $I \subset \mathbb{K}[x_1, \cdots, x_{n}]$ has finite generators.
 
 \subsubsection{Proof}
-If $I = \{0\}$, this singleton set $\{0\}$ is certainly finite.\footnote{Here we have two different $\{0\}$, the first one is a trivial ideal (as a structured set), and the other one is a singleton set of zero.}
+If $I = \{0\}$, this singleton set $\{0\}$ is certainly finite. %\footnote{Here we have two different $\{0\}$, the first one is a trivial ideal (as a structured set), and the other one is a singleton set of zero.}
 
 If $I$ contains some nonzero polynomial, we can construct a finite generating set for $I$ as follows.
 By \S\ref{monomialIdeals}, there is a set of finite $g_1, \cdots, g_t \in I$ s.t. $\left< LT(I) \right> = \left< LT(g_1), \cdots, LT(g_t) \right>$.
@@ -2829,11 +2833,16 @@ but by \S\ref{Lemma2OfSection2_3}, there is some $LT(g_i)$ s.t.
 LT(r) \sqsupseteq LT(g_i)
 \end{eqnarray}
 since $\left< LT(g_1), \cdots, LT(g_t) \right>$ is an monomial ideal by \S\ref{monomialIdeals} and $LT(r)$ is a term (i.e., a monomial times a coefficient).
-This clearly contradicts our definition of remainder, and consequently,
+This clearly contradicts our definition of remainder,
 \begin{eqnarray}
-\label{nullRemainder}
-r = 0 \Leftrightarrow f = a_1 * g_1 + \cdots + a_t * g_t.
+r = 0
 \end{eqnarray}
+and
+\begin{eqnarray}
+% \label{nullRemainder}
+f = a_1 * g_1 + \cdots + a_t * g_t.
+\end{eqnarray}
+
 Thus
 \begin{eqnarray}
 f \in \left< g_1, \cdots, g_t \right>
@@ -2863,13 +2872,13 @@ is a Gr\"obner basis iff
 \left< LT(g_1), \cdots, LT(g_t) \right> = \left< LT(I)\right>
 \end{eqnarray}
 holds.\footnote{
-From \S\ref{LargerLemma}, we already have $\left< LT(g_1), \cdots, LT(g_t) \right> \subset \left< LT(I) \right>$, so $\left< LT(g_1), \cdots, LT(g_t) \right> \supset \left< LT(I) \right>$ is the essential condition for $G$ is a Gr\"obner basis.
+From \S\ref{LargerLemma}, we have already shown $\left< LT(g_1), \cdots, LT(g_t) \right> \subset \left< LT(I) \right>$, so $\left< LT(g_1), \cdots, LT(g_t) \right> \supset \left< LT(I) \right>$ is the essential condition for $G$ is a Gr\"obner basis.
 I personally call $G$ is "gr\"obner" if 
 \begin{eqnarray}
 \label{isGroebner}
 \left< LT(g_1), \cdots, LT(g_t) \right> \supset \left< LT(I) \right>
 \end{eqnarray}
-holds, (indeed $\left< LT(g_1), \cdots, LT(g_t) \right> = \left< LT(I) \right>$ holds).
+holds, (indeed $\left< LT(g_1), \cdots, LT(g_t) \right> = \left< LT(I) \right>$ automatically holds).
 }
 
 Informally, a set $G := \{g_1, \cdots, g_t\} \subset I$ of generators is a Gr\"ober basis iff the leading of all element of $I$ is divisible by one of the $LT(g_i)$.
