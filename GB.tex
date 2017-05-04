@@ -2078,18 +2078,30 @@ f = \sum_{\alpha} a_\alpha x^\alpha \in \mathbb{K}[x_1, \cdots, x_n]
 \end{eqnarray}
 be a nonzero polynomial, and $>$ is a (fixed) monomial order.
 
-The multi degree of $f$ is given by
+The multi degree of $f$ is given by\footnote{
+\begin{eqnarray}
+MD : \mathbb{K}[x_1, \cdots, x_n] \to \mathbb{N}^n
+\end{eqnarray}
+}
 \begin{eqnarray}
 \label{multiDegree}
 MD(f) := \max \left( \alpha \in \mathbb{N}^n, a_\alpha \neq 0 \right) = \alpha_{\max} \in \mathbb{N}^n
 \end{eqnarray}
-with respect to the monomial order $>$.
+with respect to the monomial order $>$. 
 
-The leading coefficient of $f$ is
+The leading coefficient of $f$ is\footnote{
+\begin{eqnarray}
+LC : \mathbb{K}[x_1, \cdots, x_n] \to \mathbb{K}
+\end{eqnarray}
+}
 \begin{eqnarray}
 LC(f) := a_{\alpha_{\max}} \in \mathbb{K}.
 \end{eqnarray}
-The leading monomial of $f$ is
+The leading monomial of $f$ is\footnote{
+\begin{eqnarray}
+LM : \mathbb{K}[x_1, \cdots, x_n] \to \mathbb{N}^n
+\end{eqnarray}
+}
 \begin{eqnarray}
 LM(f) := x^{\alpha_{\max}},
 \end{eqnarray}
@@ -2157,11 +2169,7 @@ Then $\forall f \in \mathbb{K}[x_1, \cdots, x_n]$,
 \begin{eqnarray}
 \exists a_i, r  \in \mathbb{K}[x_1, \cdots, x_n] \text{ s.t. } f = a_1*f_1 + \cdots + a_s * f_s + r,
 \end{eqnarray}
-and either $r=0$ or $r$ is a linear combination, with coefficients in $\mathbb{K}$, of monomials, none of which is divisible by any of $LT(f_1), \cdots, LT(f_s)$:\footnote{See \S\ref{isDivisibleBy}}
-\begin{eqnarray}
-\label{remainderHasSmallerMultiDegree}
-r \sqsubset LT(f_1), \cdots, \text{ and } r \sqsubset LT(f_s).
-\end{eqnarray}
+and either $r=0$ or $r$ is a linear combination, with coefficients in $\mathbb{K}$, of monomials, none of which is divisible by any of $LT(f_1), \cdots, LT(f_s)$.\footnote{See \S\ref{isDivisibleBy}}
 Furthermore, if $a_i f_i \neq 0$., then we have \footnote{This is notation abuse, $\geq$ means $>$ or $=$ (as an ordered monomial $\mathbb{N}^n$).}
 \begin{eqnarray}
 \label{decreasingMultiDegree}
@@ -3045,7 +3053,7 @@ $\blacksquare$
 \section{Properties of Gr\"obner Bases}
 From this section, we omit $*$ symbol to indicate the multiplication.
 
-\subsection{Unique reminder properties}
+\subsection{Unique reminder properties (Proposition 1 \S2.6)}
 \label{UniqueReminderProperties}
 Let
 \begin{eqnarray}
@@ -3056,10 +3064,7 @@ Then $\forall f \in \mathbb{K}[x_1, \cdots, x_n]$, there is a unique reminder $r
 \begin{enumerate}
 \item 
 \label{property1}
-No term of $r$ is divisible by any of $LT(g_1), \cdots, LT(g_t)$:
-\begin{eqnarray}
-r \sqsubset LT(g_1), \cdots, r \sqsubset LT(g_t).
-\end{eqnarray}
+No term of $r$ is divisible by any of $LT(g_1), \cdots, LT(g_t)$.
 
 \item 
 \label{property2}
@@ -3118,7 +3123,7 @@ This unique reminder properties is sometimes taken as the definition of a Gr\"ob
 
 \subsection{Reminder and normal forms}
 \label{normalForms}
-The remainder $r$ is called the normal form of $f$ with respect to the Gr\"obner basis $G := \{g_1, \cdots, g_t\} $.
+The remainder $r$ is sometimes called the normal form of $f$ with respect to the Gr\"obner basis $G := \{g_1, \cdots, g_t\} $.
 
 We will write
 \begin{eqnarray}
@@ -3140,7 +3145,7 @@ Using this notation, the property in \S\ref{UniqueReminderProperties} becomes th
 \exists! r \in \mathbb{K}[x_1, \cdots, x_n] \text{ s.t. } f \stackrel{G}{\to} r.
 \end{eqnarray}
 
-\subsection{An ideal membership condition}
+\subsection{An ideal membership condition (Corollary 2 \S2.6, Exercise 3 \S2.6)}
 \label{IMC}
 Let $G := \{g_1, \cdots, g_t\} $ be a Gr\"obner basis for an ideal $I \subset \mathbb{K}[x_1, \cdots, x_n]$.
 Then $f \in I$ iff the reminder on division of $f$ by $G$ is zero.
@@ -3157,7 +3162,7 @@ f \in I \Leftarrow f = a_1 g_1 + \cdots + a_t g_t.
 \end{eqnarray}
 Conversely, given $f \in I$, then
 \begin{eqnarray}
-f = f+0
+f = 1*f+0
 \end{eqnarray}
 satisfies the two conditions in \S\ref{UniqueReminderProperties}.
 The uniqueness implies that the reminder is zero, therefore
@@ -3211,18 +3216,23 @@ We will show the following property of S-polynomials for later use.
 \end{eqnarray}
 
 \subsubsection{Proof}
-Since $LG(f), LG(g) \sqsubseteq x^\gamma$ by definition of $\gamma$, and
+Since $LT(f), LT(g) \sqsubseteq x^\gamma$ by definition of $\gamma$, i.e.,
 \begin{eqnarray}
-\frac{x^\gamma}{LT(f)}, \frac{x^\gamma}{LT(g)} \in \mathbb{K}[x_1, \cdots, x_n],
+\exists f',g' \in \mathbb{K}[x_1, \cdots, x_n], f'LT(f) = x^\gamma = g' LT(g),
+\end{eqnarray}
+and
+\begin{eqnarray}
+f' = \frac{x^\gamma}{LT(f)}, g' = \frac{x^\gamma}{LT(g)} \in \mathbb{K}[x_1, \cdots, x_n],
 \end{eqnarray}
 we get
 \begin{eqnarray}
-S(f, g) = \frac{x^\gamma}{LT(f)} f - \frac{x^\gamma}{LT(g)} g \in I.
+S(f, g) &=& \frac{x^\gamma}{LT(f)} f - \frac{x^\gamma}{LT(g)} g \\
+&=& f' f - g' g \in I.
 \end{eqnarray}
 Therefore, S-polynomial of $I$ is in $I$.\footnote{This if the sum of elements in $I$ with $\mathbb{K}[x_1, \cdots, x_n]$ "coefficients" form.}\\
 $\blacksquare$
 
-\subsection{Lemma}
+\subsection{(Lemma 5 \S2.6)}
 \label{buchbergerLemma}
 Suppose we have a sum
 \begin{eqnarray}
@@ -3247,13 +3257,14 @@ MD\left( S(f_j, f_k) \right) < \delta.
 \end{eqnarray}
 
 \subsubsection{Proof}
-Let $d_i = LC(f_i)$, so that
+Let $d_i = LC(f_i) \in \mathbb{K}$, so that
 \begin{eqnarray}
 c_i d_i = LC(c_i f_i).
 \end{eqnarray}
 Since all $c_i * f_i$ have multi degree $\delta$ and their sum has strictly smaller multi degree (eq.(\ref{strictlySmallerMD})).
 It follows that
 \begin{eqnarray}
+\label{cidiequalzero}
 \sum_i c_i d_i = 0,
 \end{eqnarray}
 i.e., the leading coefficient is cancelled out.
@@ -3262,7 +3273,7 @@ Define polynomials which has 1 as the leading coefficient:\footnote{Here we used
 \begin{eqnarray}
 p_i := f_i/d_i = x^\delta + o(x^\delta).
 \end{eqnarray}
-Consider the telescoping sum\footnote{
+Consider the "telescoping sum"\footnote{
 From Wikipedia : \begin{quote}
 ...whose partial sums eventually only have a fixed number of terms after cancellation.
 \end{quote}
@@ -3279,7 +3290,7 @@ From Wikipedia : \begin{quote}
 &=& c_1 d_1 (p_1 -p_2) + (c_1d_1 + c_2 d_2)(p_2 -p_3) + \cdots \\
 &&+ (c_1d_1 + \cdots + c_{s-1} d_{s-1})(p_{s-1} - p_s),
 \end{eqnarray}
-where we have used $\sum_i c_i * d_i = 0$.
+where we have used $\sum_i c_i * d_i = 0$ eq.(\ref{cidiequalzero}).
 From our assumption, we have, $\forall i$,
 \begin{eqnarray}
 LT(f_i) = d_i x^\delta,
@@ -3306,7 +3317,7 @@ Now the above telescoping sum becomes
 This \footnote{The last equality can be seen as the definition of $\mathbb{K}$ coefficients $c_{j,k}$'s.} is clearly a linear combination of the S-polynomials of $\mathbb{K}$ coefficients.\\
 $\blacksquare$
 
-\subsection{Buchberger's Criterion}
+\subsection{Buchberger's Criterion (Theorem 6 \S2.6)}
 \label{Buchberger'sCriterion}
 Let $I$ be a polynomial ideal.
 Then an ordered tuple of basis $G = (g_1, \cdots, g_t)$ for $I$ is a Gr\"obner basis for $I$ iff for all pairs $j \neq k$, the remainder on division $S(g_j, g_k)$ by $G$ is zero:\footnote{It seems like a Cauchy sequence.} 
@@ -3324,7 +3335,7 @@ If $G$ is a Gr\"obner basis for $I$, the remainder on division by $G$ is 0 by \S
 \subsubsection{($\Leftarrow$) part} 
 It suffices to show that if $ \forall j\neq k, S(g_j, g_k) \stackrel{G}{\to} 0$, then $\forall f \in I$, $LT(f) \in \left< LT(g_1), \cdots, LT(g_t) \right>$, i.e., $\left< LT(I) \right> \subset \left< LT(g_1), \cdots, LT(g_t) \right>$.\footnote{See the definition of Gr\"obner basis in \S\ref{DefOfGroebner}, or eq.(\ref{isGroebner}).
 }
-We have assumed that $G$ is a generator of $I$, so $\forall f \in I, \exists h_i$, s.t.,
+We have assumed that $G$ is a generator of $I$, so $\forall f \in I, \exists h_i \in \mathbb{K}[x_1, \cdots, x_n]$, s.t.,
 \begin{eqnarray}
 f = \sum_i h_i g_i.
 \end{eqnarray}
@@ -3335,20 +3346,20 @@ Let us write
 m(i) &:=& MD(h_i g_i) \\
 \delta &:=& \left.\max\left(m(i) \right) \right|_i
 \end{eqnarray}
-then clearly
+for $G=(g_1, \cdots, g_n)$ and $\{ h_1, \cdots, h_n \}$, then clearly
 \begin{eqnarray}
 \label{MDfleqDelta}
 MD(f) \leq \delta.
 \end{eqnarray}
 If $MD(f) < \delta$ then some cancellations of the leading terms must occur.
 
-There is at least one combination of $h_i$'s s.t. $f = \sum_i h_i g_i$, we can define the following non empty set:
+Since there is at least one combination of $h_i$'s s.t. $f = \sum_i h_i g_i$, we can define the following non empty set:
 \begin{eqnarray}
 \left\{ \delta = \delta\left(\{h_i \right\}) \left| \forall \{h_i\} \text{ s.t. } f = \sum_i h_i g_i \right. \right\} \subset \mathbb{N}^n.
 \end{eqnarray}
 Since our monomial order is well-ordering,\footnote{See eq.(\ref{multiDegree}), multi degrees are essentially monomials.} we can pick up the minimal element, let's call it $\delta_0$.
 
-\paragraph{Lemma $(MD(f) = \delta_0)$}
+\paragraph{Claim: $(MD(f) = \delta_0)$}
 Since we still have $MD(f) \leq \delta_0$, we can decompose $f = \sum_i h_i g_i$ as
 \begin{eqnarray}
 \nonumber
@@ -3368,7 +3379,7 @@ MD\left( \sum_{m(i) = \delta_0} LT(h_i) g_i \right) < \delta_0
 \end{eqnarray}
 but we will see that $MD(f) < \delta_0$ contradicts our minimal assumption of $\delta_0$.
 
-Assuming $MD(f) < \delta_0$, all the terms in the 1st sum $\sum_{m(i) = \delta_0} LT(h_i) g_i $ have the same multi degree, since the summation is under $m(i) = \delta_0$:\footnote{The leading term carries the maximum monomial, so $m(i) = MD(h_i g_i) = MD\left( LT(h_i) g_i  \right)$.}
+If we assume $MD(f) < \delta_0$, all the terms in the 1st sum $\sum_{m(i) = \delta_0} LT(h_i) g_i $ have the same multi degree, since the summation is under $m(i) = \delta_0$:\footnote{The leading term carries the maximum monomial, so $m(i) = MD(h_i g_i) = MD\left( LT(h_i) g_i  \right)$.}
 \begin{eqnarray}
 MD\left( LT(h_i) g_i  \right) = \delta_0
 \end{eqnarray}
@@ -3399,6 +3410,7 @@ The 1st sum becomes
 
 Now we use our hypothesis $S(g_j, g_k) \stackrel{G}{\to} 0$, i.e., the division algorithm implies that there exists $a_{i,j,k} \in \mathbb{K}[x_1, \cdots, x_n]$ s.t.
 \begin{eqnarray}
+\label{SpolWithGenerators}
 S(g_j, g_k) = \sum_{i} a_{i,j,k} g_i
 \end{eqnarray}
 By eq.(\ref{decreasingMultiDegree}), we have
@@ -3444,14 +3456,14 @@ Now, by eq.(\ref{tildeH}),
 f &=& \sum_{m(i) = \delta_0} LT(h_i) g_i + \sum_{m(i) = \delta_0} \left(h_i - LT(h_i) \right) g_i + \sum_{m(i) < \delta_0} h_i g_i \\
 &=& \sum_{i} \tilde{h}_i g_i  + \sum_{m(i) = \delta_0} \left(h_i - LT(h_i) \right) g_i + \sum_{m(i) < \delta_0} h_i g_i.
 \end{eqnarray}
-We have shown that if we suppose $MD(f) < \delta_0$, then we get eq.(\ref{keyResult}), and this shows all three sums have strictly smaller multi degrees than $\delta_0$.
+We have shown that if we suppose $MD(f) < \delta_0$, then we get eq.(\ref{keyResult}), and this shows all three sums in above equation have strictly smaller multi degrees than $\delta_0$.
 This, however, contradicts the minimal assumption of $\delta_0$, therefore we have\footnote{Actually, we show $MD(f) \nless \delta_0$, but we already have eq.(\ref{MDfleqDelta}), thus we get this equality.}
 \begin{eqnarray}
 \label{equality}
 MD(f) = \delta_0.
 \end{eqnarray}
 
-\paragraph{$LT(f)$ is divisible by $\left.LT(g_j)\right|_j$}
+\paragraph{Claim: $LT(f)$ is divisible by each $LT(g_j)$}
 Since we have shown $MD(f) = \delta_0$ (eq.(\ref{equality})), then
 \begin{eqnarray}
 MD(f) = \delta_0 = \left. \max\left(MD(h_i g_i) \right) \right|_i \geq MD(g_j), \forall j.
@@ -3545,14 +3557,14 @@ where
 \begin{eqnarray}
 f \stackrel{G}{\to} r, f \stackrel{G'}{\to} r',
 \end{eqnarray}
-and $r,r'$ satisfy eq.(\ref{remainderHasSmallerMultiDegree}), i.e., $r \sqsubset \left. LT(g_j) \right|_j$.
+and $r,r'$ satisfy that none of their monomials are divisible by $\left. LT(g_j) \right|_j$.
 Let us suppose $r' - r \neq 0$.
 Since the differences are in $I$
 \begin{eqnarray}
 g - g' = r' - r \in I,
 \end{eqnarray}
 their normal forms become 0 by \S\ref{isGroebner2}.
-This contradicts the condition for the remainder (eq.(\ref{remainderHasSmallerMultiDegree})), they are not divisible by any leading terms of generators.
+This contradicts the condition for the remainder, none of monomials in the remainder is divisible by any of $\left. LT(g_j) \right|_j$, they are not divisible by any leading terms of generators.
 Therefore we have 
 \begin{eqnarray}
 r = r'.
@@ -3562,11 +3574,11 @@ $\blacksquare$
 \section{Buchberger's Algorithm}
 \S\ref{Buchberger'sCriterion} gives us the function of the following type
 \begin{eqnarray}
-\verb|Basis -> Bool|
+\verb|isGroebner :: Basis -> Bool|
 \end{eqnarray}
 So, we will find a constructive algorithm of Gr\"obner basis:
 \begin{eqnarray}
-\verb|Basis -> GroebnerBasis|
+\verb|basis2GroebnerBasis :: Basis -> GroebnerBasis|
 \end{eqnarray}
 
 \subsection{Buchberger's Algorithm}
@@ -3641,7 +3653,7 @@ After one step of main loop, if $G' \neq G$ then
 \begin{eqnarray}
 G' \mapsto G'' := G' \cup \{s \}.
 \end{eqnarray}
-Since the reminder $s$ is strictly smaller than any generators of $G'$ $s \sqsubset LT(g'_i), g'_i \in G'$ (see eq.(\ref{remainderHasSmallerMultiDegree})),
+Since the reminder $s$ satisfies that none of monomials is divisible by any $LT(g'_i), g'_i \in G'$,
 \begin{eqnarray}
 LT(s) \notin LT(G')
 \end{eqnarray}
@@ -3661,7 +3673,7 @@ happen eventually.
 This occur when we meet $G^{(m+1)} = G^{(m)}$, therefore this algorithm will terminate finitely.\\
 $\blacksquare$
 
-\subsection{An elimination method}
+\subsection{An elimination method (Lemma 3 \S2.7)}
 Let $G$ be a Gr\"obner basis for the polynomial ideal $I$.
 $\forall p \in G$ s.t. 
 \begin{eqnarray}
@@ -3733,7 +3745,7 @@ and
 
 In general, $g \in G$ is reduced for a Gr\"obner basis $G$ iff no monomial of $g$ is in $\left< LT(G - \{g\}) \right>$.
 
-\subsection{A unique reduced Gr\"obner basis}
+\subsection{A unique reduced Gr\"obner basis (Proposition 6 \S2,7)}
 \label{theUniquenessOfReducedGB}
 In general, reduced Gr\"obner bases have the following nice property.
 
@@ -3840,7 +3852,7 @@ Then the ideals are equal iff the Gr\"obner bases are the same.\footnote{These G
 %\subsection{? The Problem of Solving Polynomial Equations}
 %\subsection{? The Implicitization Problem}
 
-\section{Improvements on Buchberger's Algorithm}
+\section{(Optional) Improvements on Buchberger's Algorithm}
 The most heaviest part of computation in Buchberger's Algorithm is the polynomial divisions.
 Hence, a good way to improve the efficiency of the algorithm would be to reduce the number of S-polynomials need to be considered.
 
@@ -3859,7 +3871,7 @@ s.t., whenever $a_i g_i \neq 0$, we have
 MD(f) \geq MD(a_i g_i).
 \end{eqnarray}
 
-\subsection{$f \stackrel{G}{\to} 0$(division) $\Rightarrow f \to_G 0$(reduction to 0 modulo $G$)}
+\subsection{$f \stackrel{G}{\to} 0$(division) $\Rightarrow f \to_G 0$(reduction to 0 modulo $G$) (Lemma 2 \S2.9)}
 \label{ModuloR0}
 Let $G = (g_1, \cdots, g_s)$ be an ordered tuple of elements in $\mathbb{K}[x_1, \cdots, x_n]$.
 Then $f \stackrel{G}{\to} 0$ implies $f \to_G 0$, though the converse is false in general.
@@ -3880,27 +3892,34 @@ The counterexample for $\Leftarrow$ direction is in \S\ref{membership}.\footnote
 \\
 $\blacksquare$
 
-\subsection{Gr\"obner basis criterion, a more general version}
+\subsection{Gr\"obner basis criterion, a more general version (Theorem 3 \S2.9)}
 \label{efficientGCriterion}
 A basis $G = \{g_1, \cdots, g_s\}$ for an ideal $I \subset \mathbb{K}[x_1, \cdots, x_n]$ is a Gr\"obner basis iff $\forall i \neq j, S(g_i, g_j) \to_G 0$.
 
 \subsubsection{Proof}
-In the proof of \S\ref{Buchberger'sCriterion}, what we have used are the expressions
+$(\Rightarrow)$ If $G$ is groebner for $I$,
 \begin{eqnarray}
-S(g_j, g_k) = \sum_{i} a_{i,j,k} g_i
+S(g_i, g_j) \stackrel{G}{\to} 0
 \end{eqnarray}
-with the conditions eq.(\ref{MDSgeqAG})
+since $S(g_i, g_j) \in I$, then 
+\begin{eqnarray}
+S(g_i, g_j) \to_G 0
+\end{eqnarray}
+from \S\ref{ModuloR0}.
+
+$(\Leftarrow)$
+In the proof of \S\ref{Buchberger'sCriterion}, we have used $S(g_j, g_k) = \sum_{i} a_{i,j,k} g_i $ (eq. (\ref{SpolWithGenerators}) with the conditions eq.(\ref{MDSgeqAG})
 \begin{eqnarray}
 MD\left(S(g_j, g_k) \right) \geq MD( a_{i,j,k} g_i)
 \end{eqnarray}
 for nonzero $a_{i,j,k}$.
 This is the same as $S(g_i, g_j) \to_G 0$ in \S\ref{ModuloR0}, and
 \begin{eqnarray}
-G \text{ is gr\"obenr} \Leftrightarrow S(g_i, g_j) \to_G 0.
+G \text{ is gr\"obenr} \Leftarrow S(g_i, g_j) \to_G 0.
 \end{eqnarray}
 $\blacksquare$
 
-\subsection{Proposition}
+\subsection{(Proposition 4 \S2.8)}
 Given a finite set $G \subset \mathbb{K}[x_1, \cdots, x_n]$, suppose that we have $f,g \in G$ s.t.
 \begin{eqnarray}
 \label{relativelyPrime}
@@ -3914,8 +3933,8 @@ If this condition eq.(\ref{relativelyPrime}) holds, then this S-polynomial is gu
 \subsubsection{Proof}
 For simplicity, we can assume $LC(f) = 1 = LC(g)$, i.e. $LT(f) = LM(f), LT(g) = LM(g)$ and
 \begin{eqnarray}
-f &=& LM(f) + p \\
-g &=& LM(g) + q
+p &:=&f - LM(f)\\
+q &=& g - LM(g).
 \end{eqnarray}
 Clearly,
 \begin{eqnarray}
@@ -3941,7 +3960,7 @@ Since $f,g \in G$, we have
 S(f,g) \to_G 0.
 \end{eqnarray}
 
-If the leading terms in $pg$ and $gf$ are the same, then
+If we assume that the leading terms in $pg$ and $gf$ are the same, then
 \begin{eqnarray}
 LM(p)LM(g) = LM(q)LM(f).
 \end{eqnarray}
@@ -3950,7 +3969,7 @@ Since we have assumed eq.(\ref{relativelyPrime}), this means
 \exists h (\neq 0) \in \mathbb{K}[x_1, \cdots, x_n] \text{ s.t. } LM(p) = h*LM(f), LM(q) = h* LM(g).  \qquad
 \end{eqnarray}
 It contradicts eq.(\ref{strictSmallnessConditions1}) and eq.(\ref{strictSmallnessConditions2}).
-Thus the leading terms in the last expression for $S(f,g)$ cannot cancel:
+Thus the leading terms in the last expression for $S(f,g)$ cannot cancel, so $MD\left(S(f,g) \right)$ is either $MD(pg)$ or $MD(qf)$:
 \begin{eqnarray}
 MD\left(S(f,g) \right) = \max\left( MD(pg), MD(qf) \right).
 \end{eqnarray}
@@ -3961,7 +3980,7 @@ This proof gives us a more efficient version of \S\ref{efficientGCriterion}; to 
 \begin{eqnarray}
 \forall i<j, S(g_i, g_j) \to_G 0,
 \end{eqnarray}
-where $LM(g_i),LM(g_j)$ are not relatively prime, see eq.(\ref{relativelyPrime}).
+for $i<j$ with $LM(g_i),LM(g_j)$ are not relatively prime, see eq.(\ref{relativelyPrime}).
 
 Here is another way to improve, a kind of generalization of S-polynomials.
 
@@ -3982,7 +4001,10 @@ s.t.,
 \begin{eqnarray}
 \sum_{i=1}^s h_i * LT(f_i) = 0.
 \end{eqnarray}
-We let $S(F)$ be the subset of $(\mathbb{K}[x_1, \cdots, x_n])^s$ consisting of all syzygies on the leading terms of $F$.
+Let $S(F)$ be the subset of $(\mathbb{K}[x_1, \cdots, x_n])^s$ consisting of all syzygies on the leading terms of $F = (f_1, \cdots, f_s)$:
+\begin{eqnarray}
+S(F) := \left\{\left. (h_1, \cdots, h_s) \in (\mathbb{K}[x_1, \cdots, x_n])^s \right| \sum_{i=1}^s h_i * LT(f_i) = 0\right\}.
+\end{eqnarray}
 
 Let
 \begin{eqnarray}
@@ -4009,6 +4031,9 @@ An element $S \in S(F)$ is homogeneous of multidegree $\alpha$, where $\alpha \i
 S = (c_1x^{\alpha(1)}, \cdots, c_sx^{\alpha(s)}),
 \end{eqnarray}
 where $c_i \in \mathbb{K}$ and $\alpha(i) + MD(f_i) = \alpha$, whenever $c_i \neq 0$.
+\begin{eqnarray}
+c_ix^{\alpha(i)} * LT(f_i) \sim x^{\alpha(i) + MD(f_i)}
+\end{eqnarray}
 
 \subsection{? Lemma}
 Every element of $S(F)$ can be written uniquely as a sum of homogeneous elements of $S(F)$.
