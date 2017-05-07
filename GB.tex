@@ -147,6 +147,17 @@ a*(b+c) = (a*b) + (a*c) & \text{ (left distributivity)} \\
 
 \end{enumerate}
 
+\subsection{Integral domains}
+An integral domain is a commutative ring $R$ 
+\begin{eqnarray}
+\forall a,b \in R, a*b = b*a
+\end{eqnarray}
+in which
+\begin{eqnarray}
+\forall a,b \in R - \{0\}, a*b \neq 0
+\end{eqnarray}
+holds.
+
 \subsection{Fields}
 A field is a ring $(\mathbb{K},+,*)$ whose non-zero elements form an abelian group under multiplication, i.e.,
 \begin{eqnarray}
@@ -154,6 +165,9 @@ A field is a ring $(\mathbb{K},+,*)$ whose non-zero elements form an abelian gro
 \end{eqnarray}
 A field $\mathbb{K}$ is a finite field iff the underlying set $\mathbb{K}$ is finite, e.g., any quotient ring of prime $\mathbb{Z}_p$.
 A field $\mathbb{K}$ is called infinite field iff the underlying set is infinite, say $\mathbb{Q,R,C}$.
+
+Any field is also an integral domain, since if we suppose $a\neq 0, b\neq 0$ but $ a*b=0$, then $\exists a^{-1}$ and $a^{-1} *(a*b) = a^{-1}*0$, i.e., $b=0$ (contradiction).
+
 
 \subsection{Equivalence relations}
 An equivalence relation $\sim$ on a set $S$ is a binary relation which is reflexive, symmetric, and transitive:
@@ -539,12 +553,12 @@ $\blacksquare$
 \subsection{The fundamental theorem in algebra}
 \label{TheFundamentalTheoremInAlgebra}
 Let $a_n \neq 0, \left. a_i\right|_i$ be $\mathbb{C}$.
-An arbitrary $\mathbb{C}$-coefficients degree $n>0$ polynomial
+An arbitrary $\mathbb{C}$-coefficients degree $n>0$ function $f: \mathbb{C} \to \mathbb{C}$;
 \begin{eqnarray}
 \label{nDegreePolynomial}
-a_n * x^n + a_{n-1} * x^{n-1} + \cdots + a_0 = 0%, a_n \neq 0, \left. a_i\right|_i \in \mathbb{C}
+f(x) := a_n * x^n + a_{n-1} * x^{n-1} + \cdots + a_0 %, a_n \neq 0, \left. a_i\right|_i \in \mathbb{C}
 \end{eqnarray}
-has a solution in $\mathbb{C}$.
+so called polynomial, has a root, i.e., a solution for $f(x)=0$ in $\mathbb{C}$.
 This means that $\mathbb{C}$ is algebraically closed.
 
 \subsubsection{Proof}
@@ -756,7 +770,7 @@ We write
 \label{polynomialRing}
 \mathbb{K}[x_1,\cdots,x_n] := \left\{\left. f(x) = \sum_\alpha c_\alpha * x^\alpha \right| \forall c_\alpha \in \mathbb{K} \right\}
 \end{eqnarray}
-as a set of all polynomial in $n$ variables $(x_1, \cdots, x_n)$ with  $\mathbb{K}$ coefficients.
+as a set of all polynomial\footnote{$\mathbb{K}[x_1,\cdots,x_n]$ has ring structure.} in $n$ variables $(x_1, \cdots, x_n)$ with $\mathbb{K}$ coefficients.
 
 \subsection{Affine spaces}
 Let $\mathbb{K}$ be a field and $n \in \mathbb{N}$.
@@ -779,6 +793,61 @@ which is defined by
 a:=(a_1, \cdots, a_n) \stackrel{f}{\mapsto} f(a) := \sum_\alpha c_\alpha * a^\alpha.
 \end{eqnarray}
 That is, the function $f$ replace every $x_i$ by $a_i$ in the expression for $f(x)$.
+
+\subsection{Zero function on an infinite field (Proposition 5 \S1.1)}
+Consider an infinite field $\mathbb{K}$ and $f(x) \in \mathbb{K}[x_1, \cdots, x_n]$.
+Then $f(x) = 0$ in $\mathbb{K}[x_1, \cdots, x_n]$, i.e., zero polynomial iff $f : \mathbb{K}^n \to \mathbb{K}$ is the zero function.
+
+\subsubsection{Proof}
+$(\Rightarrow)$ part is obvious, since if $f(x)$ is the zero polynomial, i.e., all the coefficients are zero, then the zero polynomial $f(x)$ gives zero function:
+\begin{eqnarray}
+f : \mathbb{K}^n \to \mathbb{K}; \forall a \mapsto 0.
+\end{eqnarray}
+
+$(\Leftarrow)$ We will use induction on $n$ to show the statement that if for every $a \in \mathbb{K}^n, f(a) = 0$ then $f(x)$ is the zero polynomial.
+
+\begin{enumerate}
+\item Base case ($n=1$).
+Since $f(x) \in \mathbb{K}[x]$ has at most $\deg(f)$ roots in $\mathbb{K}$ by \S\ref{atMostDeg}, if $\deg(f)$ is finite, we can choose some
+\begin{eqnarray}
+a \in \mathbb{K}
+\end{eqnarray}
+s.t.
+\begin{eqnarray}
+f(a) \neq 0
+\end{eqnarray}
+since $\mathbb{K}$ is infinite (set).
+So, if $\forall a \in \mathbb{K}, f(a) = 0$ then $f(x)=0$ has infinitely many roots, and hence $f(x)$ is the zero polynomial.
+
+\item Induction step.
+Assume $n-1$ case is true, and let $f(x) \in \mathbb{K}[x_1, \cdots, x_n]$ be a polynomial s.t. $\forall a \in \mathbb{K}^n, f(a) = 0$.
+By collecting the terms which are powers of $x_n$, we can write
+\begin{eqnarray}
+f(x) = \sum_{i} g_i (x_1, \cdots, x_{n-1}) * x_n^i.
+\end{eqnarray}
+
+Let us fix
+\begin{eqnarray}
+(a_1, \cdots, a_{n-1}) \in \mathbb{K}^{n-1}
+\end{eqnarray}
+and treat
+\begin{eqnarray}
+f(a_1, \cdots, a_{n-1}, x_n) \in \mathbb{K}[x_n] 
+\end{eqnarray}
+as a polynomial only of $x_n$.
+Since $f(x)$ is zero for every $x_n$, $f(x)$ is the zero polynomial of $x_n$.
+This means the "coefficients" are zero
+\begin{eqnarray}
+g_i (a_1, \cdots, a_{n-1}) = 0, \forall i.
+\end{eqnarray}
+However, our choice of $(a_1, \cdots, a_{n-1})$ is arbitrary and this means every $g_i(x)$ is zero polynomial in $\mathbb{K}[x_1, \cdots, x_{n-1}]$.
+From the induction hypothesis, $g_i (a_1, \cdots, a_{n-1}) = 0$, and
+\begin{eqnarray}
+f(x) = 0
+\end{eqnarray}
+i.e., the zero polynomial.\\
+\end{enumerate}
+$\blacksquare$
 
 \section{Affine Varieties}
 Affine varieties are curves, surfaces, and their higher dimensional generalizations defined by polynomial equations.
@@ -1472,61 +1541,61 @@ Since $\deg(q)$ is $m-1$, and has at most $m-1$ root in $\mathbb{K}$.
 Therefore, $f(x)=0$ has at most $m$ root.\\
 $\blacksquare$
 
-\subsection{Zero function on an infinite field (Proposition 5 \S1.1)}
-Consider an infinite field $\mathbb{K}$ and $f(x) \in \mathbb{K}[x_1, \cdots, x_n]$.
-Then $f(x) = 0$ in $\mathbb{K}[x_1, \cdots, x_n]$, i.e., zero polynomial iff $f : \mathbb{K}^n \to \mathbb{K}$ is the zero function.
-
-\subsubsection{Proof}
-$(\Rightarrow)$ part is obvious, since if $f(x)$ is the zero polynomial, i.e., all the coefficients are zero, then the zero polynomial $f(x)$ gives zero function:
-\begin{eqnarray}
-f : \mathbb{K}^n \to \mathbb{K}; \forall a \mapsto 0.
-\end{eqnarray}
-
-$(\Leftarrow)$ We will use induction on $n$ to show the statement that if for every $a \in \mathbb{K}^n, f(a) = 0$ then $f(x)$ is the zero polynomial.
-
-\begin{enumerate}
-\item Base case ($n=1$).
-Since $f(x) \in \mathbb{K}[x]$ has at most $\deg(f)$ roots in $\mathbb{K}$ by \S\ref{atMostDeg}, if $\deg(f)$ is finite, we can choose some
-\begin{eqnarray}
-a \in \mathbb{K}
-\end{eqnarray}
-s.t.
-\begin{eqnarray}
-f(a) \neq 0
-\end{eqnarray}
-since $\mathbb{K}$ is infinite (set).
-So, if $\forall a \in \mathbb{K}, f(a) = 0$ then $f(x)=0$ has infinitely many roots, and hence $f(x)$ is the zero polynomial.
-
-\item Induction step.
-Assume $n-1$ case is true, and let $f(x) \in \mathbb{K}[x_1, \cdots, x_n]$ be a polynomial s.t. $\forall a \in \mathbb{K}^n, f(a) = 0$.
-By collecting the terms which are powers of $x_n$, we can write
-\begin{eqnarray}
-f(x) = \sum_{i} g_i (x_1, \cdots, x_{n-1}) * x_n^i.
-\end{eqnarray}
-
-Let us fix
-\begin{eqnarray}
-(a_1, \cdots, a_{n-1}) \in \mathbb{K}^{n-1}
-\end{eqnarray}
-and treat
-\begin{eqnarray}
-f(a_1, \cdots, a_{n-1}, x_n) \in \mathbb{K}[x_n] 
-\end{eqnarray}
-as a polynomial only of $x_n$.
-Since $f(x)$ is zero for every $x_n$, $f(x)$ is the zero polynomial of $x_n$.
-This means the "coefficients" are zero
-\begin{eqnarray}
-g_i (a_1, \cdots, a_{n-1}) = 0, \forall i.
-\end{eqnarray}
-However, our choice of $(a_1, \cdots, a_{n-1})$ is arbitrary and this means every $g_i(x)$ is zero polynomial in $\mathbb{K}[x_1, \cdots, x_{n-1}]$.
-From the induction hypothesis, $g_i (a_1, \cdots, a_{n-1}) = 0$, and
-\begin{eqnarray}
-f(x) = 0
-\end{eqnarray}
-i.e., the zero polynomial.\\
-\end{enumerate}
-
-$\blacksquare$
+%\subsection{Zero function on an infinite field (Proposition 5 \S1.1)}
+%Consider an infinite field $\mathbb{K}$ and $f(x) \in \mathbb{K}[x_1, \cdots, x_n]$.
+%Then $f(x) = 0$ in $\mathbb{K}[x_1, \cdots, x_n]$, i.e., zero polynomial iff $f : \mathbb{K}^n \to \mathbb{K}$ is the zero function.
+%
+%\subsubsection{Proof}
+%$(\Rightarrow)$ part is obvious, since if $f(x)$ is the zero polynomial, i.e., all the coefficients are zero, then the zero polynomial $f(x)$ gives zero function:
+%\begin{eqnarray}
+%f : \mathbb{K}^n \to \mathbb{K}; \forall a \mapsto 0.
+%\end{eqnarray}
+%
+%$(\Leftarrow)$ We will use induction on $n$ to show the statement that if for every $a \in \mathbb{K}^n, f(a) = 0$ then $f(x)$ is the zero polynomial.
+%
+%\begin{enumerate}
+%\item Base case ($n=1$).
+%Since $f(x) \in \mathbb{K}[x]$ has at most $\deg(f)$ roots in $\mathbb{K}$ by \S\ref{atMostDeg}, if $\deg(f)$ is finite, we can choose some
+%\begin{eqnarray}
+%a \in \mathbb{K}
+%\end{eqnarray}
+%s.t.
+%\begin{eqnarray}
+%f(a) \neq 0
+%\end{eqnarray}
+%since $\mathbb{K}$ is infinite (set).
+%So, if $\forall a \in \mathbb{K}, f(a) = 0$ then $f(x)=0$ has infinitely many roots, and hence $f(x)$ is the zero polynomial.
+%
+%\item Induction step.
+%Assume $n-1$ case is true, and let $f(x) \in \mathbb{K}[x_1, \cdots, x_n]$ be a polynomial s.t. $\forall a \in \mathbb{K}^n, f(a) = 0$.
+%By collecting the terms which are powers of $x_n$, we can write
+%\begin{eqnarray}
+%f(x) = \sum_{i} g_i (x_1, \cdots, x_{n-1}) * x_n^i.
+%\end{eqnarray}
+%
+%Let us fix
+%\begin{eqnarray}
+%(a_1, \cdots, a_{n-1}) \in \mathbb{K}^{n-1}
+%\end{eqnarray}
+%and treat
+%\begin{eqnarray}
+%f(a_1, \cdots, a_{n-1}, x_n) \in \mathbb{K}[x_n] 
+%\end{eqnarray}
+%as a polynomial only of $x_n$.
+%Since $f(x)$ is zero for every $x_n$, $f(x)$ is the zero polynomial of $x_n$.
+%This means the "coefficients" are zero
+%\begin{eqnarray}
+%g_i (a_1, \cdots, a_{n-1}) = 0, \forall i.
+%\end{eqnarray}
+%However, our choice of $(a_1, \cdots, a_{n-1})$ is arbitrary and this means every $g_i(x)$ is zero polynomial in $\mathbb{K}[x_1, \cdots, x_{n-1}]$.
+%From the induction hypothesis, $g_i (a_1, \cdots, a_{n-1}) = 0$, and
+%\begin{eqnarray}
+%f(x) = 0
+%\end{eqnarray}
+%i.e., the zero polynomial.\\
+%\end{enumerate}
+%
+%$\blacksquare$
 
 \subsection{Corollary (Corollary 6 \S1.1)}
 Let $\mathbb{K}$ be an infinite field, and $f(x), g(x) \in  \mathbb{K}[x_1, \cdots, x_n]$.
@@ -4161,6 +4230,16 @@ However, this is an infinite (strictly) ascending chain, and contradicts ACC.
 Thus $T$ has a maximal element.\\
 $\blacksquare$
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Hilbert's Nullstellensatz}
+Let $\mathbb{K}$ be an algebraically closed field.
+\section{Hilbert's weak Nullstellensatz}
+\subsection{Algebraic closed field is infinite}
+\subsection{Resultant}
+\subsection{Noether normalization lemma}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Elimination Theory}
 
