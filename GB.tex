@@ -59,6 +59,8 @@ DENNIS S. KEELER
 
 \verb|http://maxima.sourceforge.net|
 
+\item Arrondo, Enrique. "Another elementary proof of the Nullstellensatz." The American Mathematical Monthly 113.2 (2006): 169-171.
+
 \end{enumerate}
 
 \chapter{Basics}
@@ -1009,7 +1011,7 @@ h(x) * \sum_i g_{i}(x) * f_i(x) &=& \sum_i \left( h(x) *g_{i}(x) \right) * f_i(x
 \end{enumerate}
 $\blacksquare$
 
-\subsection{(Proposition 4 \S1.4)}
+\subsection{Ideal equality leads variety equality (Proposition 4 \S1.4)}
 \begin{eqnarray}
 \left< f_1, \cdots, f_s \right> = \left< g_1, \cdots, g_t \right> \Rightarrow \mathbb{V}(f_1, \cdots, f_s) = \mathbb{V}(g_1, \cdots, g_t).
 \end{eqnarray}
@@ -1027,13 +1029,13 @@ g_i(a) = \sum_j M_{ij}(a) * f_j(a) = 0.
 Therefore $a \in \mathbb{V}(g)$.\\
 $\blacksquare$
 
-\subsection{Definition}
+\subsection{Definition $\mathbb{I}(V)$}
 For an arbitrary variety $V \subset \mathbb{K}^n$, define
 \begin{eqnarray}
 \mathbb{I}(V) := \left\{\left. f(x) \in \mathbb{K}[x_1,\cdots,x_n] \right| \forall a \in V, f(a) = 0 \right\}
 \end{eqnarray}
 
-\subsection{(Lemma 6 \S1.4)}
+\subsection{$\mathbb{I}(V)$ is an ideal (Lemma 6 \S1.4)}
 $\mathbb{I}(V)$ is an ideal.
 
 \subsubsection{Proof}
@@ -1143,7 +1145,7 @@ An ideal $I \subset \mathbb{K}[x_1,\cdots,x_n]$ is radical iff
 f(x) \in I \Leftrightarrow \exists m \text{ s.t. } \left( f(x) \right)^m \in I.
 \end{eqnarray}
 
-\subsection{Lemma (Exercise 8 \S 1.4)}
+\subsection{$\mathbb{I}(V)$ is a radical ideal (Exercise 8 \S 1.4)}
 $\mathbb{I}(V)$ is a radical ideal.
 
 \subsubsection{Proof}
@@ -2181,7 +2183,7 @@ The leading term of $f$ is
 LT(f) := LC(f) * LM(f) = a_{\alpha_{\max}} * x^{\alpha_{\max}}.
 \end{eqnarray}
 
-\subsection{Lemma (Multiplications and summations) (Lemma 8 \S2.2)}
+\subsection{Lemma (Lemma 8 \S2.2)}
 \label{multiplication}
 Let $f, g \in \mathbb{K}[x_1, \cdots, x_n]$ be nonzero polynomial.
 Then
