@@ -12,7 +12,7 @@
 \usepackage{tikz}
 
 % To show all the labels. Remove this when finish.
-\usepackage{showkeys}
+% \usepackage{showkeys}
 
 \DeclareMathOperator*{\colim}{colim}
 \DeclareMathOperator*{\coker}{coker}
@@ -4252,7 +4252,7 @@ which has non-zero coefficient $1$ at degree $n$, but
 \begin{eqnarray}
 \forall a \in F_n, f(a) = 1 \neq 0.
 \end{eqnarray}
-Thus there is a non constant polynomial with no root, i.e., $F_n$ is not algebraically closed.\\
+Thus there is a non constant polynomial which has no root, i.e., $F_n$ is not algebraically closed.\\
 $\blacksquare$
 
 
@@ -4271,9 +4271,9 @@ x_2 &:=& \tilde{x}_2 + \lambda_2 \tilde{x}_1 \\
 &\vdots& \\
 x_n &:=& \tilde{x}_n + \lambda_n \tilde{x}_1 
 \end{eqnarray}
-Then there exist $(\lambda_2, \cdots, \lambda_n) \in \mathbb{K}^{n-1}$ s.t.
+Then there exist $(\lambda_2, \cdots, \lambda_n) \in \mathbb{K}^{n-1}$ s.t.,
 \begin{eqnarray}
-g(x_1, \cdots, x_n) &=& g(\tilde{x}_1,\tilde{x}_2 + \lambda_2 \tilde{x}_1 \cdots,  \tilde{x}_n + \lambda_n \tilde{x}_1 ) \\
+g(x_1, \cdots, x_n) &=& g(\tilde{x}_1,\tilde{x}_2 + \lambda_2 \tilde{x}_1, \cdots,  \tilde{x}_n + \lambda_n \tilde{x}_1 ) \\
 &=& c(\lambda_2, \cdots, \lambda_n) \tilde{x}_1^{N} + o( \tilde{x}_1^{N-1} )
 \end{eqnarray}
 with $c(\lambda_2, \cdots, \lambda_n)$ is non zero polynomial of $\lambda_2, \cdots, \lambda_n$. 
@@ -4310,14 +4310,14 @@ i.e.,
 \begin{eqnarray}
 \nonumber
 h_N(\tilde{x}_1, \lambda_2 \tilde{x}_1 \cdots, \lambda_n \tilde{x}_1) 
-&=& \left. h_N(\tilde{x}_1,\tilde{x}_2 + \lambda_2, \tilde{x}_1 \cdots,  \tilde{x}_n + \lambda_n \tilde{x}_1 ) \right|_{\tilde{x}_2 = \cdots \ \tilde{x}_{n} = 0} \\
+&=& \left. h_N(\tilde{x}_1,\tilde{x}_2 + \lambda_2 \tilde{x}_1, \cdots,  \tilde{x}_n + \lambda_n \tilde{x}_1 ) \right|_{\tilde{x}_2 = \cdots \ \tilde{x}_{n} = 0} \\
 &=& \tilde{x}_1^N h_N(1, \lambda_2 \cdots, \lambda_n) 
 \end{eqnarray}
-This is the only term which survives under $\tilde{x}_2 = \cdots \ \tilde{x}_{n} = 0$, and indeed
-\begin{eqnarray}
-\tilde{x}_1^N h_N(1, \lambda_2 \cdots, \lambda_n) = \tilde{x}_1^N c(\lambda_2, \cdots, \lambda_n)
-\end{eqnarray}
 since $h_N$ is homogeneous and has total degree $N$.
+This is the only term which survives under $\tilde{x}_2 = \cdots \ \tilde{x}_{n} = 0$, and
+\begin{eqnarray}
+\tilde{x}_1^N h_N(1, \lambda_2 \cdots, \lambda_n) = \tilde{x}_1^N c(\lambda_2, \cdots, \lambda_n).
+\end{eqnarray}
 
 \item
 Since $\mathbb{K}$ is infinite, zero polynomial is zero map (see \S\ref{zeroPolZeroFunc}), i.e., all the coefficients are zero.
@@ -4368,7 +4368,7 @@ Since the corresponding matrix of given linear coordinate change
 \begin{eqnarray}
 \left(\begin{array}{cccc}1 &   &   &   \\ \lambda_2 &  1 &   &   \\  \vdots &   &  \ddots &   \\  \lambda_n &   &   & 1 \end{array}\right)
 \end{eqnarray}
-has $\det = 1$ so invertible.
+has $\det = 1$, so invertible.
 Therefore 
 \begin{eqnarray}
 \forall \tilde{h} \in \mathbb{K}[\tilde{x}_1, \cdots, \tilde{x}_n], \exists! h \in \mathbb{K}[x_1, \cdots, x_n] \text{ s.t. } h \mapsto \tilde{h}
@@ -4448,6 +4448,9 @@ R(f,g; x_1).
 \subsection{Resultant of ideal members}
 \label{ResultantOfIdeal}
 Let $I \subset \mathbb{K}[x_1, \cdots, x_n]$ be an ideal of an arbitrary field $\mathbb{K}$, and $R$ be the resultant of $f,g \in I$.
+\begin{eqnarray}
+R := R(f,g; x_1).
+\end{eqnarray}
 Then $R$ is also in $I$.
 
 \subsubsection{Proof}
@@ -4461,6 +4464,8 @@ R = \det (r_1+ x_1 r_2 + \cdots x_1^{N+M-1} r_{N+M} , r_2, \cdots, r_{N+M})
 \end{eqnarray}
 Now this new first column becomes
 \begin{eqnarray}
+r_1+ x_1 r_2 + \cdots x_1^{N+M-1} r_{N+M}
+=
 \left(\begin{array}{c} f \\ x_1 f  \\ \vdots  \\ x_1^{N-1} f  \\ g  \\ x_1 g  \\ \vdots \\ x_1^{M-1} g \end{array}\right)
 \end{eqnarray}
 The Laplace expansion\footnote{
@@ -4503,7 +4508,7 @@ with the trivial (defining) inclusion $I = \mathbb{K}[x_1, \cdots, x_n]$.
 
 $(\Leftarrow)$ Conversely, any non zero constant $c \in \mathbb{K}$ can be seen as a constant polynomial in $I$:
 \begin{eqnarray}
-f = \lambda x . c
+f(x_1, \cdots, x_n) = c.
 \end{eqnarray}
 Then there exists $c^{-1} \in \mathbb{K}$ and
 \begin{eqnarray}
@@ -4557,7 +4562,7 @@ If we consider
 \begin{eqnarray}
 I' := \left\{ \left. f' \in \tilde{I} \right| \text{$f'$ does not contain any $\tilde{x}_1$} \right\}
 \end{eqnarray}
-this is a proper ideal of $\mathbb{K}[\tilde{x}_2,\cdots, \tilde{x}_n]$ (\S\ref{firstElimination}), and
+this is a proper ideal of $\mathbb{K}[\tilde{x}_2,\cdots, \tilde{x}_n]$ (\S\ref{firstElimination}), and each homogeneous coefficient $\tilde{g}_r$ is in this proper ideal:
 \begin{eqnarray}
 \tilde{g}_r \in I' \subsetneq \mathbb{K}[\tilde{x}_2,\cdots, \tilde{x}_n].
 \end{eqnarray}
