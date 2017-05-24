@@ -3928,7 +3928,7 @@ Then the ideals are equal iff the Gr\"obner bases are the same.\footnote{These G
 The most heaviest part of computation in Buchberger's Algorithm is the polynomial divisions.
 Hence, a good way to improve the efficiency of the algorithm would be to reduce the number of S-polynomials need to be considered.
 
-\subsection{Definition of $\to_G$}
+\subsection{Definition of $\to_G$ (reduces to zero modulo $G$)}
 Fix a monomial order and let $G = \{g_1, \cdots, g_s\} \subset \mathbb{K}[x_1, \cdots, x_n]$.
 Given $f \in \mathbb{K}[x_1, \cdots, x_n]$, we say that $f$ reduces to zero modulo $G$,\footnote{This is different from $\stackrel{G}{\to}$ of division algorithm in \S\ref{normalForms}.}
 \begin{eqnarray}
@@ -4097,52 +4097,54 @@ S_{ij} =  \frac{x^\gamma}{LT(f_i)} e_i - \frac{x^\gamma}{LT(f_j)} e_j
 gives a syzygy on the leading terms of $F$, where $x^\gamma$ is the least common multiple of $LT(f_i), LT(f_j)$.
 In fact, the name S-polynomial is actually an abbreviation for "syzygy polynomial."
 
-\subsection{Definition of homogeneous of multidegree}
-An element $S \in S(F)$ is homogeneous of multidegree $\alpha$, where $\alpha \in \mathbb{N}^n$, provided that
-\begin{eqnarray}
-S = (c_1x^{\alpha(1)}, \cdots, c_sx^{\alpha(s)}),
-\end{eqnarray}
-where $c_i \in \mathbb{K}$ and $\alpha(i) + MD(f_i) = \alpha$, whenever $c_i \neq 0$.
-\begin{eqnarray}
-c_ix^{\alpha(i)} * LT(f_i) \sim x^{\alpha(i) + MD(f_i)}
-\end{eqnarray}
+%\subsection{Definition of homogeneous of multidegree}
+%An element $S \in S(F)$ is homogeneous of multidegree $\alpha$, where $\alpha \in \mathbb{N}^n$, provided that
+%\begin{eqnarray}
+%S = (c_1x^{\alpha(1)}, \cdots, c_sx^{\alpha(s)}),
+%\end{eqnarray}
+%where $c_i \in \mathbb{K}$ and $\alpha(i) + MD(f_i) = \alpha$, whenever $c_i \neq 0$.
+%\begin{eqnarray}
+%c_ix^{\alpha(i)} * LT(f_i) \sim x^{\alpha(i) + MD(f_i)}
+%\end{eqnarray}
+%
+%\subsection{? Lemma}
+%Every element of $S(F)$ can be written uniquely as a sum of homogeneous elements of $S(F)$.
+%That is, $S(F)$ has a finite basis.
+%
+%\subsubsection{Proof}
+%Let $S = (h_1, \cdots, h_s) \in S(F)$, i.e. $F = (f_1, \cdots, f_s)$ with
+%\begin{eqnarray}
+%\sum_{i=1}^s h_i * LT(f_i) = 0.
+%\end{eqnarray}
+%
+%
+%\subsection{? Proposition}
+%Given $F = (f_1, \cdots, f_s)$, every syzygy $S \in S(F)$ can be written as
+%\begin{eqnarray}
+%S = \sum_{i<j} u_{ij} S_{ij},
+%\end{eqnarray}
+%where $u_{ij} \in \mathbb{K}[x_1, \cdots, x_n]$ and the syzygy $S_{ij}$ is defined in eq.(?)
+%
+%\subsection{? Theorem}
+%A basis $G = (g_1, \cdots, g_t)$ for an ideal $I$ is a Gr\"obner basis iff for every element $S = (h_1, \cdots, h_t)$ in a homogeneous basis for the syzygies $S(G)$, we have
+%\begin{eqnarray}
+%S \cdot G = \sum_{i = 1}^t h_i g_i \to_G 0.
+%\end{eqnarray}
+%
+%\subsection{? Proposition} 
+%Give $G = (g_1, \cdots, g_t)$, suppose that $S \subset \{S_{ij} | 1 \leq i < j \leq t\}$ is a basis of $S(G)$.
+%In addition, suppose we have distinct elements $g_i, g_j, g_k \in G$ s.t.
+%\begin{eqnarray}
+%LT(g_k) \text{ divides } LCM( LT(g_i), LT(g_j))
+%\end{eqnarray}
+%IF $S_{ij}, S_{jk} \in \mathcal{S}$, then $\mathcal{S} -\{ S_{ij} \}$ is also a basis of $S(G)$.
+%(Note: If $i > j$, we set $S_{ij} = S_{ji}$.)
+%
+%\subsection{? Theorem}
+%Let $I = \left< f_1, \cdots, f_s \right>$ be a polynomial ideal.
+%Then a Gr\"obner basis for $I$ can be constructed in a finite number of steps by the following algorithm: $\cdots$
 
-\subsection{? Lemma}
-Every element of $S(F)$ can be written uniquely as a sum of homogeneous elements of $S(F)$.
-That is, $S(F)$ has a finite basis.
-
-\subsubsection{Proof}
-Let $S = (h_1, \cdots, h_s) \in S(F)$, i.e. $F = (f_1, \cdots, f_s)$ with
-\begin{eqnarray}
-\sum_{i=1}^s h_i * LT(f_i) = 0.
-\end{eqnarray}
-
-
-\subsection{? Proposition}
-Given $F = (f_1, \cdots, f_s)$, every syzygy $S \in S(F)$ can be written as
-\begin{eqnarray}
-S = \sum_{i<j} u_{ij} S_{ij},
-\end{eqnarray}
-where $u_{ij} \in \mathbb{K}[x_1, \cdots, x_n]$ and the syzygy $S_{ij}$ is defined in eq.(?)
-
-\subsection{? Theorem}
-A basis $G = (g_1, \cdots, g_t)$ for an ideal $I$ is a Gr\"obner basis iff for every element $S = (h_1, \cdots, h_t)$ in a homogeneous basis for the syzygies $S(G)$, we have
-\begin{eqnarray}
-S \cdot G = \sum_{i = 1}^t h_i g_i \to_G 0.
-\end{eqnarray}
-
-\subsection{? Proposition} 
-Give $G = (g_1, \cdots, g_t)$, suppose that $S \subset \{S_{ij} | 1 \leq i < j \leq t\}$ is a basis of $S(G)$.
-In addition, suppose we have distinct elements $g_i, g_j, g_k \in G$ s.t.
-\begin{eqnarray}
-LT(g_k) \text{ divides } LCM( LT(g_i), LT(g_j))
-\end{eqnarray}
-IF $S_{ij}, S_{jk} \in \mathcal{S}$, then $\mathcal{S} -\{ S_{ij} \}$ is also a basis of $S(G)$.
-(Note: If $i > j$, we set $S_{ij} = S_{ji}$.)
-
-\subsection{? Theorem}
-Let $I = \left< f_1, \cdots, f_s \right>$ be a polynomial ideal.
-Then a Gr\"obner basis for $I$ can be constructed in a finite number of steps by the following algorithm: $\cdots$
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{A side story on ACC}
 We have used Hilbert Basis Theorem in the proof of ACC \S\ref{ACC}, but ACC is independent from Hilbert Basis Theorem.
